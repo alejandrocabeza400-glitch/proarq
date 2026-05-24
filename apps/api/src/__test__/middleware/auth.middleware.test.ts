@@ -1,6 +1,6 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { decodeJWT, checkRole } from '../../infra/adapters/driving/middleware/auth.middleware';
-import type { Request, Response, NextFunction } from 'express';
+import { describe, expect, mock, test } from 'bun:test';
+import type { NextFunction, Request, Response } from 'express';
+import { checkRole, decodeJWT } from '../../infra/adapters/driving/middleware/auth.middleware';
 
 function createMockReq(headers: Record<string, string> = {}): Partial<Request> {
   return {
@@ -11,8 +11,8 @@ function createMockReq(headers: Record<string, string> = {}): Partial<Request> {
 
 function createMockRes(): Partial<Response> {
   const res: Partial<Response> = {};
-  res.status = mock((code: number) => res) as any;
-  res.json = mock((body: any) => res) as any;
+  res.status = mock((_code: number) => res) as any;
+  res.json = mock((_body: any) => res) as any;
   return res;
 }
 

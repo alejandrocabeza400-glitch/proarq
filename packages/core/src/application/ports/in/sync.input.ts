@@ -27,33 +27,35 @@ const syncCotizacionSchema = z.object({
   created_by: z.string().optional(),
 });
 
-export const syncPayloadSchema = z.object({
-  insumos: z.array(syncInsumoSchema).default([]),
-  apus: z.array(syncApuSchema).default([]),
-  cotizaciones: z.array(syncCotizacionSchema).default([]),
-  apuInsumos: z
-    .array(
-      z.object({
-        id: z.string(),
-        apu_id: z.string(),
-        insumo_id: z.string(),
-        rendimiento: z.string(),
-        desperdicio: z.string().optional(),
-        unit_price_snapshot: z.string(),
-      }),
-    )
-    .default([]),
-  cotizacionItems: z
-    .array(
-      z.object({
-        id: z.string(),
-        cotizacion_id: z.string(),
-        apu_id: z.string(),
-        cantidad: z.string(),
-      }),
-    )
-    .default([]),
-}).strict();
+export const syncPayloadSchema = z
+  .object({
+    insumos: z.array(syncInsumoSchema).default([]),
+    apus: z.array(syncApuSchema).default([]),
+    cotizaciones: z.array(syncCotizacionSchema).default([]),
+    apuInsumos: z
+      .array(
+        z.object({
+          id: z.string(),
+          apu_id: z.string(),
+          insumo_id: z.string(),
+          rendimiento: z.string(),
+          desperdicio: z.string().optional(),
+          unit_price_snapshot: z.string(),
+        }),
+      )
+      .default([]),
+    cotizacionItems: z
+      .array(
+        z.object({
+          id: z.string(),
+          cotizacion_id: z.string(),
+          apu_id: z.string(),
+          cantidad: z.string(),
+        }),
+      )
+      .default([]),
+  })
+  .strict();
 
 export type SyncPayloadInput = z.infer<typeof syncPayloadSchema>;
 

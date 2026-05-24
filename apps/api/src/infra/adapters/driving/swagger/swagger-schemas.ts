@@ -8,8 +8,7 @@ export const securitySchemes = {
     type: 'http',
     scheme: 'bearer',
     bearerFormat: 'JWT',
-    description:
-      'Ingrese su token JWT. Ejemplo: `valid-admin-jwt-token`',
+    description: 'Ingrese su token JWT. Ejemplo: `valid-admin-jwt-token`',
   },
 } as const;
 
@@ -31,13 +30,7 @@ export const schemas = {
       },
       role: {
         type: 'string',
-        enum: [
-          'ADMIN',
-          'GERENTE_OBRA',
-          'DIRECTOR_OBRA',
-          'CLIENTE',
-          'REPRESENTANTE',
-        ],
+        enum: ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA', 'CLIENTE', 'REPRESENTANTE'],
         example: 'ADMIN',
       },
       createdAt: { type: 'string', format: 'date-time' },
@@ -249,6 +242,57 @@ export const schemas = {
     },
   },
 
+  // -- Proyecto --
+  Proyecto: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid', example: '3fa85f64-5717-4562-b3fc-2c963f66afa6' },
+      codigo: { type: 'string', example: 'PROJ-001' },
+      nombre: { type: 'string', example: 'Edificio Los Alerces' },
+      descripcion: {
+        type: 'string',
+        example: 'Edificación multifamiliar de 10 pisos',
+        nullable: true,
+      },
+      estado: {
+        type: 'string',
+        enum: ['PLANIFICACION', 'EN_EJECUCION', 'FINALIZADO', 'SUSPENDIDO'],
+        example: 'PLANIFICACION',
+      },
+      clienteId: { type: 'string', format: 'uuid', nullable: true },
+      createdBy: { type: 'string', format: 'uuid' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time', nullable: true },
+    },
+  },
+  CreateProyectoInput: {
+    type: 'object',
+    required: ['codigo', 'nombre'],
+    properties: {
+      codigo: { type: 'string', example: 'PROJ-001' },
+      nombre: { type: 'string', example: 'Edificio Los Alerces' },
+      descripcion: { type: 'string', example: 'Edificación multifamiliar de 10 pisos' },
+      estado: {
+        type: 'string',
+        enum: ['PLANIFICACION', 'EN_EJECUCION', 'FINALIZADO', 'SUSPENDIDO'],
+        default: 'PLANIFICACION',
+      },
+      clienteId: { type: 'string', format: 'uuid' },
+    },
+  },
+  UpdateProyectoInput: {
+    type: 'object',
+    properties: {
+      nombre: { type: 'string', example: 'Edificio Los Alerces Modificado' },
+      descripcion: { type: 'string', example: 'Nueva descripción para el proyecto' },
+      estado: {
+        type: 'string',
+        enum: ['PLANIFICACION', 'EN_EJECUCION', 'FINALIZADO', 'SUSPENDIDO'],
+      },
+      clienteId: { type: 'string', format: 'uuid' },
+    },
+  },
+
   // -- Error Responses --
   ErrorResponse: {
     type: 'object',
@@ -391,8 +435,7 @@ export const responses = {
     },
   },
   Forbidden: {
-    description:
-      'No autorizado — el rol no tiene permisos para esta acción',
+    description: 'No autorizado — el rol no tiene permisos para esta acción',
     content: {
       'application/json': {
         schema: { $ref: '#/components/schemas/ErrorResponse' },

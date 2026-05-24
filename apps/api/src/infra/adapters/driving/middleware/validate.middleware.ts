@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
 import { ValidationError } from '@proarq/core';
+import type { NextFunction, Request, Response } from 'express';
+import { ZodError, type ZodSchema } from 'zod';
 
 export function validate(schema: ZodSchema) {
   return (req: Request, _res: Response, next: NextFunction) => {

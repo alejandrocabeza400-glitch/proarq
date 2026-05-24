@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
 import Decimal from 'decimal.js';
+import type { NextFunction, Request, Response } from 'express';
 
 /**
  * Middleware that validates profit margin >= 8% when estado

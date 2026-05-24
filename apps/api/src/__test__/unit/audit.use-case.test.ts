@@ -1,6 +1,6 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { AuditUseCase } from '@proarq/core/application/use-cases/audit.use-case';
+import { describe, expect, mock, test } from 'bun:test';
 import type { AuditRepository } from '@proarq/core/application/ports/out/audit-repository.port';
+import { AuditUseCase } from '@proarq/core/application/use-cases/audit.use-case';
 
 const mockAuditLog = {
   id: 'dd0e8400-e29b-41d4-a716-446655440008',

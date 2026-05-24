@@ -16,9 +16,7 @@ describe('Cotizaciones endpoints', () => {
           projectoId: 'a00e8400-e29b-41d4-a716-446655440005',
           codigo: 'COT-001',
           clienteId: '550e8400-e29b-41d4-a716-446655440000',
-          items: [
-            { apuId: '770e8400-e29b-41d4-a716-446655440002', cantidad: '10.00' },
-          ],
+          items: [{ apuId: '770e8400-e29b-41d4-a716-446655440002', cantidad: '10.00' }],
         });
 
       expect(res.status).toBe(201);
@@ -115,7 +113,12 @@ describe('Cotizaciones endpoints', () => {
       const res = await request(app)
         .get('/api/v1/cotizaciones')
         .set('Authorization', `Bearer ${adminToken}`)
-        .query({ estado: 'BORRADOR', projecto_id: 'a00e8400-e29b-41d4-a716-446655440005', page: 1, limit: 10 });
+        .query({
+          estado: 'BORRADOR',
+          projecto_id: 'a00e8400-e29b-41d4-a716-446655440005',
+          page: 1,
+          limit: 10,
+        });
 
       expect(res.status).toBe(200);
     });

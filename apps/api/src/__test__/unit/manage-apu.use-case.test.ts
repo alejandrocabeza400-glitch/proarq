@@ -1,8 +1,7 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { ManageApuUseCase } from '@proarq/core/application/use-cases/manage-apu.use-case';
+import { describe, expect, mock, test } from 'bun:test';
 import type { ApuRepository } from '@proarq/core/application/ports/out/apu-repository.port';
 import type { InsumoRepository } from '@proarq/core/application/ports/out/insumo-repository.port';
-import { AppError } from '@proarq/core/errors';
+import { ManageApuUseCase } from '@proarq/core/application/use-cases/manage-apu.use-case';
 
 const mockApu = {
   id: '770e8400-e29b-41d4-a716-446655440002',
@@ -43,7 +42,7 @@ describe('ManageApuUseCase', () => {
         findById: mock(async () => mockApu),
         findByCodigo: mock(async () => null),
         create: mock(async (data) => ({ ...mockApu, ...data })),
-        update: mock(async (id, data) => ({ ...mockApu, ...data })),
+        update: mock(async (_id, data) => ({ ...mockApu, ...data })),
         delete: mock(async () => {}),
         addInsumo: mock(async (data) => ({ ...mockApuInsumo, ...data })),
         removeInsumo: mock(async () => {}),
@@ -129,7 +128,7 @@ describe('ManageApuUseCase', () => {
       const result = await useCase.findById('770e8400-e29b-41d4-a716-446655440002');
 
       expect(result).toBeDefined();
-      expect(result!.id).toBe('770e8400-e29b-41d4-a716-446655440002');
+      expect(result?.id).toBe('770e8400-e29b-41d4-a716-446655440002');
     });
   });
 
@@ -153,7 +152,7 @@ describe('ManageApuUseCase', () => {
       };
       const mockInsumoRepo: InsumoRepository = {
         findAll: mock(async () => []),
-        findById: mock(async (id) => {
+        findById: mock(async (_id) => {
           // Return current cost_base from master
           return { ...mockInsumo, costBase: '1.50' };
         }),

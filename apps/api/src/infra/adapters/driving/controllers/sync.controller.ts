@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
-import { SyncUseCase } from '@proarq/core/application/use-cases/sync.use-case';
+import type { SyncUseCase } from '@proarq/core/application/use-cases/sync.use-case';
+import type { NextFunction, Request, Response } from 'express';
 
 export function syncController(useCase: SyncUseCase) {
   return async (req: Request, res: Response, next: NextFunction) => {

@@ -1,8 +1,13 @@
-import type { UserRepository } from '../ports/out/user-repository.port';
-import type { CreateUserInput, UpdateUserInput, UserQueryInput } from '../ports/in/create-user.input';
 import type { User } from '../../domain/entities/user.entity';
 import { AppError } from '../../errors/app.error';
 import { NotFoundError } from '../../errors/not-found.error';
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  UserQueryInput,
+} from '../ports/in/create-user.input';
+import type { AuditRepository } from '../ports/out/audit-repository.port';
+import type { UserRepository } from '../ports/out/user-repository.port';
 
 /**
  * Create User Use Case.
@@ -10,9 +15,12 @@ import { NotFoundError } from '../../errors/not-found.error';
  * No Express, no Drizzle, no HTTP.
  */
 export class CreateUserUseCase {
-  constructor(private readonly userRepo: UserRepository) {}
+  constructor(
+    private readonly userRepo: UserRepository,
+    private readonly auditRepo?: AuditRepository,
+  ) {}
 
-  async execute(input: CreateUserInput): Promise<User> {
+  async execute(input: CreateUserInput, actorUserId?: string): Promise<User> {
     const existing = await this.userRepo.findByEmail(input.email);
     if (existing) {
       throw new AppError('Email already in use', 409);
@@ -26,12 +34,27 @@ export class CreateUserUseCase {
 
     const passwordHash = await Bun.password.hash(input.password);
 
-    return this.userRepo.create({
+    const user = await this.userRepo.create({
       name: input.name,
       email: input.email,
       passwordHash,
       role,
     });
+
+    if (this.auditRepo && actorUserId) {
+      await this.auditRepo.create({
+        tableName: 'users',
+        recordId: user.id,
+        action: 'INSERT',
+        userId: actorUserId,
+        dataHistory: {
+          before: {},
+          after: { name: user.name, email: user.email, role: user.role },
+        },
+      });
+    }
+
+    return user;
   }
 
   async findAll(filters?: UserQueryInput): Promise<User[]> {
@@ -46,19 +69,55 @@ export class CreateUserUseCase {
     return user;
   }
 
-  async update(id: string, data: UpdateUserInput): Promise<User> {
+  async update(id: string, data: UpdateUserInput, actorUserId?: string): Promise<User> {
     const existing = await this.userRepo.findById(id);
     if (!existing) {
       throw new NotFoundError('User');
     }
-    return this.userRepo.update(id, data);
+
+    const before = {
+      name: existing.name,
+      email: existing.email,
+      role: existing.role,
+    };
+
+    const updated = await this.userRepo.update(id, data);
+
+    if (this.auditRepo && actorUserId) {
+      await this.auditRepo.create({
+        tableName: 'users',
+        recordId: id,
+        action: 'UPDATE',
+        userId: actorUserId,
+        dataHistory: {
+          before,
+          after: { name: updated.name, email: updated.email, role: updated.role },
+        },
+      });
+    }
+
+    return updated;
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, actorUserId?: string): Promise<void> {
     const existing = await this.userRepo.findById(id);
     if (!existing) {
       throw new NotFoundError('User');
     }
+
+    if (this.auditRepo && actorUserId) {
+      await this.auditRepo.create({
+        tableName: 'users',
+        recordId: id,
+        action: 'DELETE',
+        userId: actorUserId,
+        dataHistory: {
+          before: { name: existing.name, email: existing.email, role: existing.role },
+          after: {},
+        },
+      });
+    }
+
     await this.userRepo.delete(id);
   }
 }

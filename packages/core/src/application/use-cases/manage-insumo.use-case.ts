@@ -1,7 +1,7 @@
-import type { InsumoRepository } from '../ports/out/insumo-repository.port';
-import type { AuditRepository } from '../ports/out/audit-repository.port';
 import type { Insumo } from '../../domain/entities/insumo.entity';
 import { AppError } from '../../errors/app.error';
+import type { AuditRepository } from '../ports/out/audit-repository.port';
+import type { InsumoRepository } from '../ports/out/insumo-repository.port';
 
 const VALID_UNIDADES = ['M3', 'KG', 'UND', 'GL'];
 
@@ -31,7 +31,15 @@ export class ManageInsumoUseCase {
       recordId: insumo.id,
       action: 'INSERT',
       userId: data.createdBy,
-      dataHistory: { before: {}, after: { codigo: data.codigo, nombre: data.nombre, unidad: data.unidad, cost_base: data.costBase } },
+      dataHistory: {
+        before: {},
+        after: {
+          codigo: data.codigo,
+          nombre: data.nombre,
+          unidad: data.unidad,
+          cost_base: data.costBase,
+        },
+      },
     });
 
     return insumo;
@@ -114,7 +122,11 @@ export class ManageInsumoUseCase {
       unidad: string;
       costBase: string;
     }>,
-  ): Promise<{ imported: number; skipped: number; errors: Array<{ row: number; errors: string[] }> }> {
+  ): Promise<{
+    imported: number;
+    skipped: number;
+    errors: Array<{ row: number; errors: string[] }>;
+  }> {
     const errors: Array<{ row: number; errors: string[] }> = [];
     const validRows: Array<{
       codigo: string;
@@ -148,10 +160,7 @@ export class ManageInsumoUseCase {
     }
 
     if (errors.length > 0) {
-      throw new AppError(
-        'Validation failed for bulk upload',
-        422,
-      );
+      throw new AppError('Validation failed for bulk upload', 422);
     }
 
     // Check for duplicate codigos and skip them

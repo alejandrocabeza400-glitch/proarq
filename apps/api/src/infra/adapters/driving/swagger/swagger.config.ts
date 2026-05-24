@@ -1,4 +1,4 @@
-import { securitySchemes, schemas, responses } from './swagger-schemas';
+import { responses, schemas, securitySchemes } from './swagger-schemas';
 
 // ---------------------------------------------------------------------------
 // OpenAPI 3.0.3 Specification — ProArq API
@@ -14,13 +14,8 @@ export const swaggerSpec: Record<string, unknown> = {
     description:
       'API de gestión de presupuestos de obra — ProArq\n\n## Autenticación\nTodas las rutas protegidas requieren un token JWT en el header `Authorization: Bearer <token>`.',
   },
-  servers: [
-    { url: 'http://localhost:8000', description: 'Local Development' },
-  ],
+  servers: [{ url: 'http://localhost:8000', description: 'Local Development' }],
 
-  // -----------------------------------------------------------------------
-  // Paths
-  // -----------------------------------------------------------------------
   paths: {
     // -- Health --
     '/api/v1/health': {
@@ -83,7 +78,62 @@ export const swaggerSpec: Record<string, unknown> = {
                     data: {
                       type: 'object',
                       properties: {
-                        token: { type: 'string', description: 'JWT token' },
+                        accessToken: { type: 'string', description: 'JWT Access Token' },
+                        refreshToken: { type: 'string', description: 'JWT Refresh Token' },
+                        user: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string', format: 'uuid' },
+                            name: { type: 'string' },
+                            email: { type: 'string', format: 'email' },
+                            role: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
+    '/api/v1/auth/refresh': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Refrescar token JWT expirado usando refresh token',
+        operationId: 'refreshToken',
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['refreshToken'],
+                properties: {
+                  refreshToken: { type: 'string', description: 'Token de refresco de sesión' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Refresco exitoso — devuelve nuevos tokens y datos del usuario',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        accessToken: { type: 'string', description: 'Nuevo JWT Access Token' },
+                        refreshToken: { type: 'string', description: 'Nuevo JWT Refresh Token' },
                         user: {
                           type: 'object',
                           properties: {
@@ -133,7 +183,10 @@ export const swaggerSpec: Record<string, unknown> = {
                 schema: {
                   type: 'object',
                   properties: {
-                    message: { type: 'string', example: 'If the email exists, a reset link has been sent' },
+                    message: {
+                      type: 'string',
+                      example: 'If the email exists, a reset link has been sent',
+                    },
                   },
                 },
               },
@@ -157,8 +210,17 @@ export const swaggerSpec: Record<string, unknown> = {
                 type: 'object',
                 required: ['token', 'newPassword'],
                 properties: {
-                  token: { type: 'string', description: 'Reset token recibido por email', example: 'reset-token-123' },
-                  newPassword: { type: 'string', format: 'password', minLength: 8, example: 'NewPassword123!' },
+                  token: {
+                    type: 'string',
+                    description: 'Reset token recibido por email',
+                    example: 'reset-token-123',
+                  },
+                  newPassword: {
+                    type: 'string',
+                    format: 'password',
+                    minLength: 8,
+                    example: 'NewPassword123!',
+                  },
                 },
               },
             },
@@ -201,7 +263,12 @@ export const swaggerSpec: Record<string, unknown> = {
                 properties: {
                   name: { type: 'string', maxLength: 255, example: 'Juan Pérez' },
                   email: { type: 'string', format: 'email', example: 'juan@proarq.com' },
-                  password: { type: 'string', format: 'password', minLength: 8, example: 'SecurePass123!' },
+                  password: {
+                    type: 'string',
+                    format: 'password',
+                    minLength: 8,
+                    example: 'SecurePass123!',
+                  },
                   role: {
                     type: 'string',
                     enum: ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA', 'CLIENTE', 'REPRESENTANTE'],
@@ -234,11 +301,41 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'name', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por nombre' },
-          { name: 'email', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por email' },
-          { name: 'role', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por rol' },
-          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 }, description: 'Número de página' },
-          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Elementos por página' },
+          {
+            name: 'name',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por nombre',
+          },
+          {
+            name: 'email',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por email',
+          },
+          {
+            name: 'role',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por rol',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 1 },
+            description: 'Número de página',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 10, maximum: 100 },
+            description: 'Elementos por página',
+          },
         ],
         responses: {
           '200': {
@@ -262,6 +359,27 @@ export const swaggerSpec: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/users/pdf': {
+      get: {
+        tags: ['Users'],
+        summary: 'Exportar usuarios a PDF',
+        operationId: 'exportUsersPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de usuarios',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/api/v1/users/{id}': {
       get: {
         tags: ['Users'],
@@ -270,7 +388,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del usuario' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del usuario',
+          },
         ],
         responses: {
           '200': {
@@ -293,7 +417,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del usuario' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del usuario',
+          },
         ],
         requestBody: {
           required: true,
@@ -303,7 +433,11 @@ export const swaggerSpec: Record<string, unknown> = {
                 type: 'object',
                 properties: {
                   name: { type: 'string', maxLength: 255, example: 'Juan Pérez Actualizado' },
-                  email: { type: 'string', format: 'email', example: 'juan.actualizado@proarq.com' },
+                  email: {
+                    type: 'string',
+                    format: 'email',
+                    example: 'juan.actualizado@proarq.com',
+                  },
                   role: {
                     type: 'string',
                     enum: ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA', 'CLIENTE', 'REPRESENTANTE'],
@@ -335,7 +469,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del usuario' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del usuario',
+          },
         ],
         responses: {
           '204': { description: 'Usuario eliminado — sin contenido' },
@@ -392,11 +532,41 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'codigo', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por código' },
-          { name: 'nombre', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por nombre' },
-          { name: 'unidad', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por unidad' },
-          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 }, description: 'Número de página' },
-          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Elementos por página' },
+          {
+            name: 'codigo',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por código',
+          },
+          {
+            name: 'nombre',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por nombre',
+          },
+          {
+            name: 'unidad',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por unidad',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 1 },
+            description: 'Número de página',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 10, maximum: 100 },
+            description: 'Elementos por página',
+          },
         ],
         responses: {
           '200': {
@@ -420,6 +590,27 @@ export const swaggerSpec: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/insumos/pdf': {
+      get: {
+        tags: ['Insumos'],
+        summary: 'Exportar insumos a PDF',
+        operationId: 'exportInsumosPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de insumos',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/api/v1/insumos/{id}': {
       get: {
         tags: ['Insumos'],
@@ -428,7 +619,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del insumo' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del insumo',
+          },
         ],
         responses: {
           '200': {
@@ -451,7 +648,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del insumo' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del insumo',
+          },
         ],
         requestBody: {
           required: true,
@@ -490,7 +693,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del insumo' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del insumo',
+          },
         ],
         responses: {
           '204': { description: 'Insumo eliminado — sin contenido' },
@@ -536,7 +745,10 @@ export const swaggerSpec: Record<string, unknown> = {
                     data: {
                       type: 'object',
                       properties: {
-                        imported: { type: 'integer', description: 'Cantidad de registros importados' },
+                        imported: {
+                          type: 'integer',
+                          description: 'Cantidad de registros importados',
+                        },
                         skipped: { type: 'integer', description: 'Cantidad de registros omitidos' },
                         errors: {
                           type: 'array',
@@ -607,9 +819,27 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'codigo', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por código' },
-          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 }, description: 'Número de página' },
-          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Elementos por página' },
+          {
+            name: 'codigo',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por código',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 1 },
+            description: 'Número de página',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 10, maximum: 100 },
+            description: 'Elementos por página',
+          },
         ],
         responses: {
           '200': {
@@ -633,6 +863,27 @@ export const swaggerSpec: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/apus/pdf': {
+      get: {
+        tags: ['APUs'],
+        summary: 'Exportar APUs a PDF',
+        operationId: 'exportApusPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de APUs',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/api/v1/apus/{id}': {
       get: {
         tags: ['APUs'],
@@ -641,7 +892,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del APU' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del APU',
+          },
         ],
         responses: {
           '200': {
@@ -664,7 +921,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del APU' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del APU',
+          },
         ],
         requestBody: {
           required: true,
@@ -673,7 +936,11 @@ export const swaggerSpec: Record<string, unknown> = {
               schema: {
                 type: 'object',
                 properties: {
-                  nombre: { type: 'string', maxLength: 255, example: 'Excavación Manual - Actualizado' },
+                  nombre: {
+                    type: 'string',
+                    maxLength: 255,
+                    example: 'Excavación Manual - Actualizado',
+                  },
                   tipo: { type: 'string', maxLength: 50, example: 'EXCAVACION' },
                 },
               },
@@ -704,7 +971,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del APU' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del APU',
+          },
         ],
         requestBody: {
           required: true,
@@ -714,9 +987,18 @@ export const swaggerSpec: Record<string, unknown> = {
                 type: 'object',
                 required: ['insumoId', 'rendimiento'],
                 properties: {
-                  insumoId: { type: 'string', format: 'uuid', example: '3fa85f64-5717-4562-b3fc-2c963f66afa6' },
+                  insumoId: {
+                    type: 'string',
+                    format: 'uuid',
+                    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                  },
                   rendimiento: { type: 'string', pattern: '^\\d+(\\.\\d+)?$', example: '1.5' },
-                  desperdicio: { type: 'string', pattern: '^\\d+(\\.\\d+)?$', default: '0', example: '0.05' },
+                  desperdicio: {
+                    type: 'string',
+                    pattern: '^\\d+(\\.\\d+)?$',
+                    default: '0',
+                    example: '0.05',
+                  },
                 },
               },
             },
@@ -751,8 +1033,20 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del APU' },
-          { name: 'itemId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID del insumo asociado (ApuInsumo)' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del APU',
+          },
+          {
+            name: 'itemId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID del insumo asociado (ApuInsumo)',
+          },
         ],
         responses: {
           '204': { description: 'Insumo eliminado del APU — sin contenido' },
@@ -781,7 +1075,11 @@ export const swaggerSpec: Record<string, unknown> = {
                 properties: {
                   projectoId: { type: 'string', maxLength: 50, example: 'PROJ-001' },
                   codigo: { type: 'string', maxLength: 50, example: 'COT-001' },
-                  clienteId: { type: 'string', format: 'uuid', description: 'ID del cliente (opcional)' },
+                  clienteId: {
+                    type: 'string',
+                    format: 'uuid',
+                    description: 'ID del cliente (opcional)',
+                  },
                   items: {
                     type: 'array',
                     description: 'Items de la cotización',
@@ -819,10 +1117,34 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'projecto_id', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por ID de proyecto' },
-          { name: 'estado', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por estado' },
-          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 }, description: 'Número de página' },
-          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Elementos por página' },
+          {
+            name: 'projecto_id',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por ID de proyecto',
+          },
+          {
+            name: 'estado',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por estado',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 1 },
+            description: 'Número de página',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 10, maximum: 100 },
+            description: 'Elementos por página',
+          },
         ],
         responses: {
           '200': {
@@ -846,6 +1168,27 @@ export const swaggerSpec: Record<string, unknown> = {
         },
       },
     },
+    '/api/v1/cotizaciones/pdf': {
+      get: {
+        tags: ['Cotizaciones'],
+        summary: 'Exportar cotizaciones a PDF',
+        operationId: 'exportCotizacionesPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de cotizaciones',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/api/v1/cotizaciones/{id}': {
       get: {
         tags: ['Cotizaciones'],
@@ -854,7 +1197,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización',
+          },
         ],
         responses: {
           '200': {
@@ -877,7 +1226,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización',
+          },
         ],
         requestBody: {
           required: true,
@@ -902,9 +1257,21 @@ export const swaggerSpec: Record<string, unknown> = {
                       },
                     },
                   },
-                  factorAPercentage: { type: 'string', pattern: '^\\d+(\\.\\d{1,2})?$', example: '15.00' },
-                  factorBPercentage: { type: 'string', pattern: '^\\d+(\\.\\d{1,2})?$', example: '10.00' },
-                  profitMarginPercent: { type: 'string', pattern: '^\\d+(\\.\\d{1,2})?$', example: '8.00' },
+                  factorAPercentage: {
+                    type: 'string',
+                    pattern: '^\\d+(\\.\\d{1,2})?$',
+                    example: '15.00',
+                  },
+                  factorBPercentage: {
+                    type: 'string',
+                    pattern: '^\\d+(\\.\\d{1,2})?$',
+                    example: '10.00',
+                  },
+                  profitMarginPercent: {
+                    type: 'string',
+                    pattern: '^\\d+(\\.\\d{1,2})?$',
+                    example: '8.00',
+                  },
                 },
               },
             },
@@ -932,7 +1299,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización',
+          },
         ],
         responses: {
           '204': { description: 'Cotización eliminada — sin contenido' },
@@ -950,7 +1323,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización original' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización original',
+          },
         ],
         responses: {
           '201': {
@@ -975,7 +1354,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA', 'CLIENTE', 'REPRESENTANTE'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización',
+          },
         ],
         responses: {
           '200': {
@@ -1000,7 +1385,13 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'ID de la cotización' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+            description: 'ID de la cotización',
+          },
         ],
         requestBody: {
           required: true,
@@ -1046,11 +1437,41 @@ export const swaggerSpec: Record<string, unknown> = {
         security: [{ bearerAuth: [] }],
         'x-roles': ['ADMIN'],
         parameters: [
-          { name: 'tableName', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por nombre de tabla' },
-          { name: 'recordId', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por ID del registro' },
-          { name: 'userId', in: 'query', required: false, schema: { type: 'string' }, description: 'Filtrar por ID del usuario' },
-          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 }, description: 'Número de página' },
-          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Elementos por página' },
+          {
+            name: 'tableName',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por nombre de tabla',
+          },
+          {
+            name: 'recordId',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por ID del registro',
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por ID del usuario',
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 1 },
+            description: 'Número de página',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', default: 10, maximum: 100 },
+            description: 'Elementos por página',
+          },
         ],
         responses: {
           '200': {
@@ -1066,6 +1487,27 @@ export const swaggerSpec: Record<string, unknown> = {
                     },
                   },
                 },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/api/v1/audit-logs/pdf': {
+      get: {
+        tags: ['Audit Logs'],
+        summary: 'Exportar registros de auditoría a PDF',
+        operationId: 'exportAuditLogsPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de registros de auditoría',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
               },
             },
           },
@@ -1101,6 +1543,192 @@ export const swaggerSpec: Record<string, unknown> = {
           },
           '400': { $ref: '#/components/responses/ValidationError' },
           '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
+
+    // -- Proyectos --
+    '/api/v1/proyectos': {
+      get: {
+        tags: ['Proyectos'],
+        summary: 'Listar todos los proyectos',
+        operationId: 'listProyectos',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'codigo',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por código de proyecto',
+          },
+          {
+            name: 'nombre',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por nombre de proyecto',
+          },
+          {
+            name: 'estado',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Filtrar por estado del proyecto',
+          },
+          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 10 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Lista de proyectos',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Proyecto' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['Proyectos'],
+        summary: 'Crear un nuevo proyecto (ADMIN, GERENTE_OBRA)',
+        operationId: 'createProyecto',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateProyectoInput' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Proyecto creado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Proyecto' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/api/v1/proyectos/pdf': {
+      get: {
+        tags: ['Proyectos'],
+        summary: 'Exportar proyectos a PDF',
+        operationId: 'exportProyectosPdf',
+        security: [{ bearerAuth: [] }],
+        'x-roles': ['ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA', 'CLIENTE', 'REPRESENTANTE'],
+        responses: {
+          '200': {
+            description: 'Archivo PDF con el listado de proyectos',
+            content: {
+              'application/pdf': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/api/v1/proyectos/{id}': {
+      get: {
+        tags: ['Proyectos'],
+        summary: 'Obtener un proyecto por ID',
+        operationId: 'getProyecto',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Proyecto encontrado',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Proyecto' },
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '404': { description: 'Proyecto no encontrado' },
+        },
+      },
+      put: {
+        tags: ['Proyectos'],
+        summary: 'Actualizar un proyecto por ID (ADMIN, GERENTE_OBRA)',
+        operationId: 'updateProyecto',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateProyectoInput' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Proyecto actualizado exitosamente',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Proyecto' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Proyecto no encontrado' },
+        },
+      },
+      delete: {
+        tags: ['Proyectos'],
+        summary: 'Eliminar un proyecto por ID (ADMIN, GERENTE_OBRA)',
+        operationId: 'deleteProyecto',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: {
+          '204': { description: 'Proyecto eliminado' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Proyecto no encontrado' },
         },
       },
     },

@@ -1,9 +1,12 @@
+import { NotFoundError } from '@proarq/core';
+import type {
+  InsumoFilters,
+  InsumoRepository,
+} from '@proarq/core/application/ports/out/insumo-repository.port';
+import type { Insumo } from '@proarq/core/domain/entities/insumo.entity';
+import { and, eq, like, sql } from 'drizzle-orm';
 import { db } from '../database/connection';
 import { insumosMaestro } from '../database/schema/insumo.schema';
-import { eq, like, and, sql } from 'drizzle-orm';
-import type { InsumoRepository, InsumoFilters } from '@proarq/core/application/ports/out/insumo-repository.port';
-import type { Insumo } from '@proarq/core/domain/entities/insumo.entity';
-import { NotFoundError } from '@proarq/core';
 
 export const postgresInsumoRepo: InsumoRepository = {
   async findAll(filters?: InsumoFilters): Promise<Insumo[]> {
@@ -32,11 +35,7 @@ export const postgresInsumoRepo: InsumoRepository = {
   },
 
   async findById(id: string): Promise<Insumo | null> {
-    const result = await db
-      .select()
-      .from(insumosMaestro)
-      .where(eq(insumosMaestro.id, id))
-      .limit(1);
+    const result = await db.select().from(insumosMaestro).where(eq(insumosMaestro.id, id)).limit(1);
     return result[0] ?? null;
   },
 
@@ -91,7 +90,11 @@ export const postgresInsumoRepo: InsumoRepository = {
   },
 
   async delete(id: string): Promise<void> {
-    const existing = await db.select().from(insumosMaestro).where(eq(insumosMaestro.id, id)).limit(1);
+    const existing = await db
+      .select()
+      .from(insumosMaestro)
+      .where(eq(insumosMaestro.id, id))
+      .limit(1);
     if (!existing[0]) {
       throw new NotFoundError('Insumo');
     }

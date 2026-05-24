@@ -26,7 +26,10 @@ export type ApuQueryInput = z.infer<typeof apuQuerySchema>;
 export const addApuInsumoSchema = z.object({
   insumoId: z.string().uuid('Invalid insumo ID'),
   rendimiento: z.string().regex(/^\d+(\.\d{1,4})?$/, 'Invalid rendimiento format'),
-  desperdicio: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid desperdicio format').default('0'),
+  desperdicio: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid desperdicio format')
+    .default('0'),
 });
 
 export type AddApuInsumoInput = z.infer<typeof addApuInsumoSchema>;

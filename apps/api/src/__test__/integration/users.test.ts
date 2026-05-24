@@ -38,14 +38,12 @@ describe('Users CRUD - ADMIN only', () => {
     });
 
     test('should return 401 without auth token', async () => {
-      const res = await request(app)
-        .post('/api/v1/users')
-        .send({
-          name: 'No Auth',
-          email: 'noauth@proarq.com',
-          password: 'SecurePass123!',
-          role: 'CLIENTE',
-        });
+      const res = await request(app).post('/api/v1/users').send({
+        name: 'No Auth',
+        email: 'noauth@proarq.com',
+        password: 'SecurePass123!',
+        role: 'CLIENTE',
+      });
 
       expect(res.status).toBe(401);
     });

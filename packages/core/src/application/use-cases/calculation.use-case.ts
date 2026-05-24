@@ -28,10 +28,7 @@ export class CalculationUseCase {
    * Calculate COTIZACION_ITEMS cost:
    * calculated_cost_direct = cantidad × APU total direct cost
    */
-  calculateCotizacionItemCost(params: {
-    cantidad: string;
-    apuTotalDirectCost: string;
-  }): string {
+  calculateCotizacionItemCost(params: { cantidad: string; apuTotalDirectCost: string }): string {
     const cantidad = new Decimal(params.cantidad);
     const apuCost = new Decimal(params.apuTotalDirectCost);
 

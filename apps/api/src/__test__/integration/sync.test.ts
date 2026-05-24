@@ -87,9 +87,7 @@ describe('POST /api/v1/sincronizar', () => {
   });
 
   test('should return 401 without auth token', async () => {
-    const res = await request(app)
-      .post('/api/v1/sincronizar')
-      .send(syncPayload);
+    const res = await request(app).post('/api/v1/sincronizar').send(syncPayload);
 
     expect(res.status).toBe(401);
   });

@@ -1,8 +1,11 @@
+import type {
+  AuditFilters,
+  AuditRepository,
+} from '@proarq/core/application/ports/out/audit-repository.port';
+import type { AuditLog } from '@proarq/core/domain/entities/audit-log.entity';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../database/connection';
 import { auditLogs } from '../database/schema/audit-log.schema';
-import { eq, and } from 'drizzle-orm';
-import type { AuditRepository, AuditFilters } from '@proarq/core/application/ports/out/audit-repository.port';
-import type { AuditLog } from '@proarq/core/domain/entities/audit-log.entity';
 
 export const postgresAuditRepo: AuditRepository = {
   async create(data: {

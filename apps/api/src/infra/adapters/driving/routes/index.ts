@@ -1,18 +1,15 @@
-import { Router, type Request, type Response, type NextFunction } from 'express';
-import { router as healthRouter } from './health.routes';
-import { router as userRouter } from './user.routes';
-import { router as authRouter } from './auth.routes';
-import { router as insumoRouter } from './insumo.routes';
-import { router as apuRouter } from './apu.routes';
-import { router as cotizacionRouter } from './cotizacion.routes';
-import { router as auditRouter } from './audit.routes';
-import { router as syncRouter } from './sync.routes';
+import { type NextFunction, type Request, type Response, Router } from 'express';
 import { env } from '../../../config/env';
-import {
-  swaggerSpec,
-  swaggerServe,
-  swaggerSetupHandler,
-} from '../swagger/swagger-ui';
+import { swaggerServe, swaggerSetupHandler, swaggerSpec } from '../swagger/swagger-ui';
+import { router as apuRouter } from './apu.routes';
+import { router as auditRouter } from './audit.routes';
+import { router as authRouter } from './auth.routes';
+import { router as cotizacionRouter } from './cotizacion.routes';
+import { router as healthRouter } from './health.routes';
+import { router as insumoRouter } from './insumo.routes';
+import { router as proyectoRouter } from './proyecto.routes';
+import { router as syncRouter } from './sync.routes';
+import { router as userRouter } from './user.routes';
 
 // ---------------------------------------------------------------------------
 // Factory: create a fresh router
@@ -30,6 +27,7 @@ export function createRouter(): Router {
   api.use('/cotizaciones', cotizacionRouter);
   api.use('/audit-logs', auditRouter);
   api.use('/sincronizar', syncRouter);
+  api.use('/proyectos', proyectoRouter);
 
   router.use('/api/v1', api);
 

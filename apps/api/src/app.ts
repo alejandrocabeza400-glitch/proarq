@@ -1,8 +1,8 @@
-import express from 'express';
-import type { Express } from 'express';
 import cors from 'cors';
-import { createRouter } from './infra/adapters/driving/routes';
+import type { Express } from 'express';
+import express from 'express';
 import { errorHandler } from './infra/adapters/driving/middleware/error-handler.middleware';
+import { createRouter } from './infra/adapters/driving/routes';
 import { env } from './infra/config/env';
 
 // ---------------------------------------------------------------------------

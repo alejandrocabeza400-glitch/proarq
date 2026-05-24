@@ -1,6 +1,6 @@
-import swaggerUi from 'swagger-ui-express';
+import type { NextFunction, Request, Response } from 'express';
 import type { SwaggerUiOptions } from 'swagger-ui-express';
-import type { Request, Response, NextFunction } from 'express';
+import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger.config';
 
 // ---------------------------------------------------------------------------
@@ -13,11 +13,6 @@ export const swaggerUiOptions: SwaggerUiOptions = {
   customSiteTitle: 'ProArq API Documentation',
 };
 
-/**
- * Base path for swagger UI static assets.
- * Empty string = relative paths from mount point (root /).
- * When mounted at /, swagger-ui-dist files are served at /swagger-ui.css, etc.
- */
 const UI_BASE_PATH = '';
 
 const specJson = JSON.stringify(swaggerSpec);
@@ -71,11 +66,7 @@ const swaggerFiles = swaggerUi.serveFiles(swaggerSpec, swaggerUiOptions);
 
 export const swaggerServe = [swaggerFiles[0], swaggerFiles[1]];
 
-export function swaggerSetupHandler(
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-): void {
+export function swaggerSetupHandler(_req: Request, res: Response, _next: NextFunction): void {
   res.send(generateSwaggerHTML());
 }
 

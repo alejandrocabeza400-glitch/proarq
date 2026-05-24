@@ -1,8 +1,12 @@
-import type { Request, Response, NextFunction } from 'express';
-import type { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
-import type { CreateInsumoInput, UpdateInsumoInput } from '@proarq/core/application/ports/in/insumo.input';
+import type {
+  CreateInsumoInput,
+  UpdateInsumoInput,
+} from '@proarq/core/application/ports/in/insumo.input';
 import { insumoQuerySchema } from '@proarq/core/application/ports/in/insumo.input';
+import type { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
 import { parse } from 'csv-parse/sync';
+import type { NextFunction, Request, Response } from 'express';
+import { generatePdfReport } from '../../../services/pdf.service';
 
 export function createInsumoController(useCase: ManageInsumoUseCase) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -74,7 +78,7 @@ export function deleteInsumoController(useCase: ManageInsumoUseCase) {
 export function bulkUploadInsumoController(useCase: ManageInsumoUseCase) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.file || !req.file.buffer) {
+      if (!req.file?.buffer) {
         res.status(400).json({ error: 'CSV file is required' });
         return;
       }
@@ -95,6 +99,41 @@ export function bulkUploadInsumoController(useCase: ManageInsumoUseCase) {
 
       const result = await useCase.bulkUpload(rows);
       res.status(201).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+export function exportPdfInsumosController(useCase: ManageInsumoUseCase) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const query = insumoQuerySchema.parse(req.query);
+      const insumos = await useCase.findAll(query);
+
+      const columns = [
+        { header: 'Código', key: 'codigo', width: 100 },
+        { header: 'Nombre del Insumo', key: 'nombre', width: 220 },
+        { header: 'Unidad', key: 'unidad', width: 80, align: 'center' as const },
+        {
+          header: 'Costo Base',
+          key: 'costBase',
+          width: 102,
+          align: 'right' as const,
+          render: (val: any) =>
+            val
+              ? `$${Number(val).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : '$0.00',
+        },
+      ];
+
+      const pdfBuffer = await generatePdfReport('Catálogo Maestro de Insumos', columns, insumos, {
+        generatedBy: req.user?.sub || 'Usuario Registrado',
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=catalogo-insumos.pdf');
+      res.send(pdfBuffer);
     } catch (err) {
       next(err);
     }

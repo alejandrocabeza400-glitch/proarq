@@ -1,6 +1,6 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { ManageCotizacionUseCase } from '@proarq/core/application/use-cases/manage-cotizacion.use-case';
+import { describe, expect, mock, test } from 'bun:test';
 import type { CotizacionRepository } from '@proarq/core/application/ports/out/cotizacion-repository.port';
+import { ManageCotizacionUseCase } from '@proarq/core/application/use-cases/manage-cotizacion.use-case';
 import { AppError } from '@proarq/core/errors';
 
 const mockCotizacion = {
@@ -42,7 +42,7 @@ describe('ManageCotizacionUseCase', () => {
         findAll: mock(async () => mockCotizacionList),
         findById: mock(async () => mockCotizacionWithItems),
         create: mock(async (data) => ({ ...mockCotizacion, ...data })),
-        update: mock(async (id, data) => ({ ...mockCotizacionWithItems, ...data })),
+        update: mock(async (_id, data) => ({ ...mockCotizacionWithItems, ...data })),
         delete: mock(async () => {}),
         cloneQuote: mock(async () => ({ ...mockCotizacion, version: 2, codigo: 'COT-001-V2' })),
         countVersionsByProject: mock(async () => 1),
@@ -53,9 +53,7 @@ describe('ManageCotizacionUseCase', () => {
         projectoId: 'a00e8400-e29b-41d4-a716-446655440005',
         codigo: 'COT-001',
         clienteId: '550e8400-e29b-41d4-a716-446655440000',
-        items: [
-          { apuId: '770e8400-e29b-41d4-a716-446655440002', cantidad: '10.00' },
-        ],
+        items: [{ apuId: '770e8400-e29b-41d4-a716-446655440002', cantidad: '10.00' }],
         createdBy: '550e8400-e29b-41d4-a716-446655440000',
       });
 
@@ -99,7 +97,7 @@ describe('ManageCotizacionUseCase', () => {
       const result = await useCase.findById('990e8400-e29b-41d4-a716-446655440004');
 
       expect(result).toBeDefined();
-      expect(result!.id).toBe('990e8400-e29b-41d4-a716-446655440004');
+      expect(result?.id).toBe('990e8400-e29b-41d4-a716-446655440004');
       expect((result as any).items).toBeDefined();
     });
 
@@ -108,7 +106,7 @@ describe('ManageCotizacionUseCase', () => {
         findAll: mock(async () => []),
         findById: mock(async () => mockCotizacionWithItems),
         create: mock(async () => mockCotizacion),
-        update: mock(async (id, data) => ({ ...mockCotizacionWithItems, ...data })),
+        update: mock(async (_id, data) => ({ ...mockCotizacionWithItems, ...data })),
         delete: mock(async () => {}),
         cloneQuote: mock(async () => ({ ...mockCotizacion, version: 2 })),
         countVersionsByProject: mock(async () => 1),
@@ -163,7 +161,7 @@ describe('ManageCotizacionUseCase', () => {
         findAll: mock(async () => []),
         findById: mock(async () => mockCotizacionWithItems),
         create: mock(async () => mockCotizacion),
-        update: mock(async (id, data) => ({ ...mockCotizacionWithItems, ...data })),
+        update: mock(async (_id, data) => ({ ...mockCotizacionWithItems, ...data })),
         delete: mock(async () => {}),
         cloneQuote: mock(async () => ({ ...mockCotizacion, version: 2 })),
         countVersionsByProject: mock(async () => 1),

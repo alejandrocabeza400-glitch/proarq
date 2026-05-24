@@ -1,8 +1,8 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { AuthResetPasswordUseCase } from '@proarq/core/application/use-cases/auth-reset-password.use-case';
-import type { UserRepository } from '@proarq/core/application/ports/out/user-repository.port';
-import { AppError } from '@proarq/core/errors';
+import { describe, expect, mock, test } from 'bun:test';
 import crypto from 'node:crypto';
+import type { UserRepository } from '@proarq/core/application/ports/out/user-repository.port';
+import { AuthResetPasswordUseCase } from '@proarq/core/application/use-cases/auth-reset-password.use-case';
+import { AppError } from '@proarq/core/errors';
 
 const futureDate = new Date(Date.now() + 3600000); // 1 hour from now
 const pastDate = new Date(Date.now() - 3600000); // 1 hour ago
@@ -12,10 +12,10 @@ const validToken = 'valid_token_hash_sha256';
 const validTokenHash = crypto.createHash('sha256').update(validToken).digest('hex');
 
 const expiredToken = 'expired_token_hash';
-const expiredTokenHash = crypto.createHash('sha256').update(expiredToken).digest('hex');
+const _expiredTokenHash = crypto.createHash('sha256').update(expiredToken).digest('hex');
 
 const invalidToken = 'invalid_token_hash';
-const invalidTokenHash = crypto.createHash('sha256').update(invalidToken).digest('hex');
+const _invalidTokenHash = crypto.createHash('sha256').update(invalidToken).digest('hex');
 
 const mockUser = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -33,7 +33,7 @@ describe('AuthResetPasswordUseCase', () => {
   describe('when token is valid and not expired', () => {
     test('should update password successfully', async () => {
       let updatedPasswordHash = '';
-      let clearedTokenHash: string | null = null;
+      let _clearedTokenHash: string | null = null;
 
       const mockRepo: UserRepository = {
         findByEmail: mock(async () => null),
@@ -42,11 +42,11 @@ describe('AuthResetPasswordUseCase', () => {
           if (tokenHash === validTokenHash) return mockUser;
           return null;
         }),
-        updatePassword: mock(async (userId: string, passwordHash: string) => {
+        updatePassword: mock(async (_userId: string, passwordHash: string) => {
           updatedPasswordHash = passwordHash;
         }),
-        clearResetToken: mock(async (userId: string) => {
-          clearedTokenHash = '';
+        clearResetToken: mock(async (_userId: string) => {
+          _clearedTokenHash = '';
         }),
       };
 

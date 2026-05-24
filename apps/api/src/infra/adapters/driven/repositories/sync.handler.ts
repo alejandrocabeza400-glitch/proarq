@@ -1,9 +1,9 @@
 import { db } from '../database/connection';
-import { insumosMaestro } from '../database/schema/insumo.schema';
 import { apus } from '../database/schema/apu.schema';
 import { apuInsumos } from '../database/schema/apu-insumo.schema';
 import { cotizaciones } from '../database/schema/cotizacion.schema';
 import { cotizacionItems } from '../database/schema/cotizacion-item.schema';
+import { insumosMaestro } from '../database/schema/insumo.schema';
 
 /**
  * Sync handler — batch inserts with ON CONFLICT DO NOTHING for idempotent offline-first sync.
@@ -28,8 +28,7 @@ function createInserter<T>(insertFn: (values: T) => any, mapRow: RowMapper<T>) {
 }
 
 const insertInsumo = createInserter(
-  (values: any) =>
-    db.insert(insumosMaestro).values(values).onConflictDoNothing(),
+  (values: any) => db.insert(insumosMaestro).values(values).onConflictDoNothing(),
   (row: any) => ({
     id: row.id,
     codigo: row.codigo,
@@ -41,8 +40,7 @@ const insertInsumo = createInserter(
 );
 
 const insertApu = createInserter(
-  (values: any) =>
-    db.insert(apus).values(values).onConflictDoNothing(),
+  (values: any) => db.insert(apus).values(values).onConflictDoNothing(),
   (row: any) => ({
     id: row.id,
     codigo: row.codigo,
@@ -53,8 +51,7 @@ const insertApu = createInserter(
 );
 
 const insertApuInsumo = createInserter(
-  (values: any) =>
-    db.insert(apuInsumos).values(values).onConflictDoNothing(),
+  (values: any) => db.insert(apuInsumos).values(values).onConflictDoNothing(),
   (row: any) => ({
     id: row.id,
     apuId: row.apu_id,
@@ -66,8 +63,7 @@ const insertApuInsumo = createInserter(
 );
 
 const insertCotizacion = createInserter(
-  (values: any) =>
-    db.insert(cotizaciones).values(values).onConflictDoNothing(),
+  (values: any) => db.insert(cotizaciones).values(values).onConflictDoNothing(),
   (row: any) => ({
     id: row.id,
     projectoId: row.projecto_id,
@@ -80,8 +76,7 @@ const insertCotizacion = createInserter(
 );
 
 const insertCotizacionItem = createInserter(
-  (values: any) =>
-    db.insert(cotizacionItems).values(values).onConflictDoNothing(),
+  (values: any) => db.insert(cotizacionItems).values(values).onConflictDoNothing(),
   (row: any) => ({
     id: row.id,
     cotizacionId: row.cotizacion_id,

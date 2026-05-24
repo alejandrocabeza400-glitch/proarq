@@ -1,6 +1,6 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { BranchCotizacionUseCase } from '@proarq/core/application/use-cases/branch-cotizacion.use-case';
+import { describe, expect, mock, test } from 'bun:test';
 import type { CotizacionRepository } from '@proarq/core/application/ports/out/cotizacion-repository.port';
+import { BranchCotizacionUseCase } from '@proarq/core/application/use-cases/branch-cotizacion.use-case';
 import { AppError } from '@proarq/core/errors';
 
 const mockCotizacionV1 = {
@@ -37,7 +37,7 @@ describe('BranchCotizacionUseCase', () => {
         create: mock(async () => mockCotizacionV1),
         update: mock(async () => mockCotizacionV1),
         delete: mock(async () => {}),
-        cloneQuote: mock(async (id, version) => ({ ...mockCotizacionV2, version })),
+        cloneQuote: mock(async (_id, version) => ({ ...mockCotizacionV2, version })),
         countVersionsByProject: mock(async () => 1),
       };
 
@@ -57,7 +57,10 @@ describe('BranchCotizacionUseCase', () => {
         findById: mock(async () => mockCotizacionV1),
         create: mock(async () => mockCotizacionV1),
         update: mock(async (id, data) => {
-          if (id === '990e8400-e29b-41d4-a716-446655440004' && (data as any).estado === 'REEMPLAZADA') {
+          if (
+            id === '990e8400-e29b-41d4-a716-446655440004' &&
+            (data as any).estado === 'REEMPLAZADA'
+          ) {
             oldQuoteMarked = true;
           }
           return { ...mockCotizacionV1, ...data };
@@ -136,7 +139,7 @@ describe('BranchCotizacionUseCase', () => {
 
   describe('branch independence', () => {
     test('modifying the branch should not affect the original', async () => {
-      let originalUpdated = false;
+      let _originalUpdated = false;
 
       const mockRepo: CotizacionRepository = {
         findAll: mock(async () => []),
@@ -148,7 +151,7 @@ describe('BranchCotizacionUseCase', () => {
         create: mock(async () => mockCotizacionV1),
         update: mock(async (id, data) => {
           if (id === '990e8400-e29b-41d4-a716-446655440004') {
-            originalUpdated = true;
+            _originalUpdated = true;
           }
           return { ...mockCotizacionV1, ...data };
         }),

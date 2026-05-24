@@ -6,6 +6,7 @@ import type { UserRepository } from '../ports/out/user-repository.port';
 
 export interface AuthLoginResult {
   accessToken: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -14,6 +15,8 @@ export class AuthLoginUseCase {
     private readonly userRepo: UserRepository,
     private readonly jwtSecret: string,
     private readonly jwtExpiresIn: string = '7d',
+    private readonly jwtRefreshSecret: string = jwtSecret,
+    private readonly jwtRefreshExpiresIn: string = '30d',
   ) {}
 
   async execute(input: LoginInput): Promise<AuthLoginResult> {
@@ -31,6 +34,10 @@ export class AuthLoginUseCase {
       expiresIn: this.jwtExpiresIn,
     } as jwt.SignOptions);
 
-    return { accessToken, user };
+    const refreshToken = jwt.sign({ sub: user.id }, this.jwtRefreshSecret, {
+      expiresIn: this.jwtRefreshExpiresIn,
+    } as jwt.SignOptions);
+
+    return { accessToken, refreshToken, user };
   }
 }

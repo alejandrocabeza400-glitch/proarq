@@ -45,6 +45,8 @@ describe('AuthLoginUseCase', () => {
       expect(result.user.role).toBe('ADMIN');
       expect(result.accessToken).toBeDefined();
       expect(typeof result.accessToken).toBe('string');
+      expect(result.refreshToken).toBeDefined();
+      expect(typeof result.refreshToken).toBe('string');
 
       Bun.password.verify = originalVerify;
     });

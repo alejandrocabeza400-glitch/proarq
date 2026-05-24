@@ -1,22 +1,27 @@
-import { Router } from 'express';
-import { decodeJWT, checkRole } from '../middleware/auth.middleware';
-import { validateProfitMargin } from '../middleware/financial.middleware';
-import { validate } from '../middleware/validate.middleware';
-import { ManageCotizacionUseCase } from '@proarq/core/application/use-cases/manage-cotizacion.use-case';
+import {
+  createCotizacionSchema,
+  updateCotizacionSchema,
+} from '@proarq/core/application/ports/in/cotizacion.input';
 import { BranchCotizacionUseCase } from '@proarq/core/application/use-cases/branch-cotizacion.use-case';
-import { createCotizacionSchema, updateCotizacionSchema } from '@proarq/core/application/ports/in/cotizacion.input';
+import { ManageCotizacionUseCase } from '@proarq/core/application/use-cases/manage-cotizacion.use-case';
+import { Router } from 'express';
+import { postgresAuditRepo } from '../../driven/repositories/postgres-audit.repository';
 import { postgresCotizacionRepo } from '../../driven/repositories/postgres-cotizacion.repository';
 import {
-  createCotizacionController,
-  listCotizacionesController,
-  getCotizacionController,
-  updateCotizacionController,
   branchCotizacionController,
+  createCotizacionController,
+  exportPdfCotizacionesController,
+  getCotizacionController,
+  listCotizacionesController,
   pdfCotizacionController,
+  updateCotizacionController,
 } from '../controllers/cotizacion.controller';
+import { checkRole, decodeJWT } from '../middleware/auth.middleware';
+import { validateProfitMargin } from '../middleware/financial.middleware';
+import { validate } from '../middleware/validate.middleware';
 
-const manageCotizacion = new ManageCotizacionUseCase(postgresCotizacionRepo);
-const branchCotizacion = new BranchCotizacionUseCase(postgresCotizacionRepo);
+const manageCotizacion = new ManageCotizacionUseCase(postgresCotizacionRepo, postgresAuditRepo);
+const branchCotizacion = new BranchCotizacionUseCase(postgresCotizacionRepo, postgresAuditRepo);
 
 export const router = Router();
 
@@ -41,14 +46,17 @@ router.patch(
 );
 
 router.get(
-  '/',
+  '/pdf',
   decodeJWT,
   checkRole(...operRoles),
-  listCotizacionesController(manageCotizacion),
+  exportPdfCotizacionesController(manageCotizacion),
 );
+
+router.get('/', decodeJWT, checkRole(...operRoles), listCotizacionesController(manageCotizacion));
 
 router.get(
   '/:id',
+
   decodeJWT,
   checkRole(...operRoles),
   getCotizacionController(manageCotizacion),

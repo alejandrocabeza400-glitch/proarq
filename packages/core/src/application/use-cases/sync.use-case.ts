@@ -3,7 +3,7 @@ import type { SyncPayloadInput, SyncResult } from '../ports/in/sync.input';
 /**
  * Sync endpoint - processes pre-generated UUID payloads with
  * ON CONFLICT DO NOTHING for idempotent offline-first sync.
- * 
+ *
  * Infrastructure repositories are injected for ON CONFLICT handling.
  */
 export class SyncUseCase {

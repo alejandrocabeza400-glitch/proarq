@@ -1,7 +1,6 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { AuthForgotPasswordUseCase } from '@proarq/core/application/use-cases/auth-forgot-password.use-case';
+import { describe, expect, mock, test } from 'bun:test';
 import type { UserRepository } from '@proarq/core/application/ports/out/user-repository.port';
-import { AppError } from '@proarq/core/errors';
+import { AuthForgotPasswordUseCase } from '@proarq/core/application/use-cases/auth-forgot-password.use-case';
 
 const mockUser = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -27,7 +26,7 @@ describe('AuthForgotPasswordUseCase', () => {
           return null;
         }),
         create: mock(async () => mockUser),
-        updateResetToken: mock(async (userId: string, tokenHash: string, expiry: Date) => {
+        updateResetToken: mock(async (_userId: string, tokenHash: string, expiry: Date) => {
           savedTokenHash = tokenHash;
           savedExpiry = expiry;
         }),
@@ -43,7 +42,7 @@ describe('AuthForgotPasswordUseCase', () => {
       expect(savedTokenHash).not.toBeNull();
       expect(savedExpiry).not.toBeNull();
       // Expiry should be in the future
-      expect(savedExpiry!.getTime()).toBeGreaterThan(Date.now());
+      expect(savedExpiry?.getTime()).toBeGreaterThan(Date.now());
     });
   });
 
@@ -76,7 +75,7 @@ describe('AuthForgotPasswordUseCase', () => {
           return null;
         }),
         create: mock(async () => mockUser),
-        updateResetToken: mock(async (userId: string, tokenHash: string) => {
+        updateResetToken: mock(async (_userId: string, tokenHash: string) => {
           if (!savedTokenHash1) savedTokenHash1 = tokenHash;
           else savedTokenHash2 = tokenHash;
         }),

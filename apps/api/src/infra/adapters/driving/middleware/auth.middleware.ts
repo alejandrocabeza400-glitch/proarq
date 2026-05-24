@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../../../config/env';
 
@@ -32,7 +32,7 @@ const TEST_TOKEN_MAP: Record<string, { sub: string; role: string }> = {
 export async function decodeJWT(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'No token provided' });
     return;
   }
@@ -60,7 +60,7 @@ export async function decodeJWT(req: Request, res: Response, next: NextFunction)
  */
 export function checkRole(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !req.user.role) {
+    if (!req.user?.role) {
       res.status(403).json({ error: 'Forbidden: insufficient role' });
       return;
     }

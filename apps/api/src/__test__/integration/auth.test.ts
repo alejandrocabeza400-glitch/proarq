@@ -11,6 +11,7 @@ describe('POST /api/v1/auth/login', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toBeDefined();
     expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
     expect(res.body.data.user).toBeDefined();
     expect(res.body.data.user.email).toBe('admin@proarq.com');
   });
@@ -34,9 +35,7 @@ describe('POST /api/v1/auth/login', () => {
   });
 
   test('should return 400 when payload is invalid', async () => {
-    const res = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'not-an-email' });
+    const res = await request(app).post('/api/v1/auth/login').send({ email: 'not-an-email' });
 
     expect(res.status).toBe(400);
   });
@@ -93,6 +92,43 @@ describe('POST /api/v1/auth/reset-password', () => {
     const res = await request(app)
       .post('/api/v1/auth/reset-password')
       .send({ token: 'valid-reset-token', newPassword: '123' });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /api/v1/auth/refresh', () => {
+  test('should return 200 with new tokens when refresh token is valid', async () => {
+    // 1. Login to get a valid refresh token
+    const loginRes = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email: 'admin@proarq.com', password: 'valid-password' });
+
+    expect(loginRes.status).toBe(200);
+    const refreshToken = loginRes.body.data.refreshToken;
+    expect(refreshToken).toBeDefined();
+
+    // 2. Refresh the token
+    const res = await request(app).post('/api/v1/auth/refresh').send({ refreshToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
+    expect(res.body.data.user).toBeDefined();
+    expect(res.body.data.user.email).toBe('admin@proarq.com');
+  });
+
+  test('should return 401 with invalid refresh token', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: 'invalid-token-string' });
+
+    expect(res.status).toBe(401);
+  });
+
+  test('should return 400 when refreshToken payload is missing', async () => {
+    const res = await request(app).post('/api/v1/auth/refresh').send({});
 
     expect(res.status).toBe(400);
   });

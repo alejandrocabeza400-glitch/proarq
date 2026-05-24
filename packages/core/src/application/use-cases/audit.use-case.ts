@@ -1,5 +1,5 @@
-import type { AuditRepository, AuditFilters } from '../ports/out/audit-repository.port';
 import type { AuditLog } from '../../domain/entities/audit-log.entity';
+import type { AuditFilters, AuditRepository } from '../ports/out/audit-repository.port';
 
 export class AuditUseCase {
   constructor(private readonly auditRepo: AuditRepository) {}

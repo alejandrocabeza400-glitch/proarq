@@ -1,9 +1,17 @@
-import type { CotizacionRepository, CotizacionWithItems, CotizacionFilters } from '../ports/out/cotizacion-repository.port';
 import type { Cotizacion } from '../../domain/entities/cotizacion.entity';
 import { AppError } from '../../errors/app.error';
+import type { AuditRepository } from '../ports/out/audit-repository.port';
+import type {
+  CotizacionFilters,
+  CotizacionRepository,
+  CotizacionWithItems,
+} from '../ports/out/cotizacion-repository.port';
 
 export class ManageCotizacionUseCase {
-  constructor(private readonly cotizacionRepo: CotizacionRepository) {}
+  constructor(
+    private readonly cotizacionRepo: CotizacionRepository,
+    private readonly auditRepo?: AuditRepository,
+  ) {}
 
   async create(data: {
     projectoId: string;
@@ -17,12 +25,32 @@ export class ManageCotizacionUseCase {
       codigo: data.codigo,
       clienteId: data.clienteId || null,
       createdBy: data.createdBy,
-      items: data.items?.map((item) => ({
-        apuId: item.apuId,
-        cantidad: item.cantidad,
-        calculatedCostDirect: '0',
-      })) || [],
+      items:
+        data.items?.map((item) => ({
+          apuId: item.apuId,
+          cantidad: item.cantidad,
+          calculatedCostDirect: '0',
+        })) || [],
     });
+
+    if (this.auditRepo && data.createdBy) {
+      await this.auditRepo.create({
+        tableName: 'cotizaciones',
+        recordId: cotizacion.id,
+        action: 'INSERT',
+        userId: data.createdBy,
+        dataHistory: {
+          before: {},
+          after: {
+            projectoId: cotizacion.projectoId,
+            codigo: cotizacion.codigo,
+            clienteId: cotizacion.clienteId,
+            estado: cotizacion.estado,
+            version: cotizacion.version,
+          },
+        },
+      });
+    }
 
     return cotizacion;
   }
@@ -44,6 +72,7 @@ export class ManageCotizacionUseCase {
       factorBPercentage?: string;
       profitMarginPercent?: string;
     },
+    actorUserId?: string,
   ): Promise<Cotizacion> {
     const existing = await this.cotizacionRepo.findById(id);
     if (!existing) {
@@ -55,6 +84,13 @@ export class ManageCotizacionUseCase {
       throw new AppError('Cannot modify an approved cotizacion', 400);
     }
 
+    const before = {
+      estado: existing.estado,
+      factorAPercentage: existing.factorAPercentage,
+      factorBPercentage: existing.factorBPercentage,
+      profitMarginPercent: existing.profitMarginPercent,
+    };
+
     const updateData: {
       estado?: string;
       factorAPercentage?: string;
@@ -64,7 +100,8 @@ export class ManageCotizacionUseCase {
     if (data.estado !== undefined) updateData.estado = data.estado;
     if (data.factorAPercentage !== undefined) updateData.factorAPercentage = data.factorAPercentage;
     if (data.factorBPercentage !== undefined) updateData.factorBPercentage = data.factorBPercentage;
-    if (data.profitMarginPercent !== undefined) updateData.profitMarginPercent = data.profitMarginPercent;
+    if (data.profitMarginPercent !== undefined)
+      updateData.profitMarginPercent = data.profitMarginPercent;
 
     const updated = await this.cotizacionRepo.update(id, updateData);
 
@@ -79,6 +116,24 @@ export class ManageCotizacionUseCase {
           calculatedCostDirect: '0',
         });
       }
+    }
+
+    if (this.auditRepo && actorUserId) {
+      await this.auditRepo.create({
+        tableName: 'cotizaciones',
+        recordId: id,
+        action: 'UPDATE',
+        userId: actorUserId,
+        dataHistory: {
+          before,
+          after: {
+            estado: updated.estado,
+            factorAPercentage: updated.factorAPercentage,
+            factorBPercentage: updated.factorBPercentage,
+            profitMarginPercent: updated.profitMarginPercent,
+          },
+        },
+      });
     }
 
     return updated;

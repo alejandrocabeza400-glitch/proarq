@@ -1,19 +1,23 @@
-import { Router } from 'express';
-import { decodeJWT, checkRole } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validate.middleware';
-import { uploadCsvMemory } from '../middleware/upload.middleware';
-import { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
-import { createInsumoSchema, updateInsumoSchema } from '@proarq/core/application/ports/in/insumo.input';
-import { postgresInsumoRepo } from '../../driven/repositories/postgres-insumo.repository';
-import { postgresAuditRepo } from '../../driven/repositories/postgres-audit.repository';
 import {
-  createInsumoController,
-  listInsumosController,
-  getInsumoController,
-  updateInsumoController,
-  deleteInsumoController,
+  createInsumoSchema,
+  updateInsumoSchema,
+} from '@proarq/core/application/ports/in/insumo.input';
+import { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
+import { Router } from 'express';
+import { postgresAuditRepo } from '../../driven/repositories/postgres-audit.repository';
+import { postgresInsumoRepo } from '../../driven/repositories/postgres-insumo.repository';
+import {
   bulkUploadInsumoController,
+  createInsumoController,
+  deleteInsumoController,
+  exportPdfInsumosController,
+  getInsumoController,
+  listInsumosController,
+  updateInsumoController,
 } from '../controllers/insumo.controller';
+import { checkRole, decodeJWT } from '../middleware/auth.middleware';
+import { uploadCsvMemory } from '../middleware/upload.middleware';
+import { validate } from '../middleware/validate.middleware';
 
 const manageInsumo = new ManageInsumoUseCase(postgresInsumoRepo, postgresAuditRepo);
 
@@ -28,6 +32,13 @@ router.post(
 );
 
 router.get(
+  '/pdf',
+  decodeJWT,
+  checkRole('ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'),
+  exportPdfInsumosController(manageInsumo),
+);
+
+router.get(
   '/',
   decodeJWT,
   checkRole('ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'),
@@ -36,6 +47,7 @@ router.get(
 
 router.get(
   '/:id',
+
   decodeJWT,
   checkRole('ADMIN', 'GERENTE_OBRA', 'DIRECTOR_OBRA'),
   getInsumoController(manageInsumo),
@@ -49,12 +61,7 @@ router.put(
   updateInsumoController(manageInsumo),
 );
 
-router.delete(
-  '/:id',
-  decodeJWT,
-  checkRole('ADMIN'),
-  deleteInsumoController(manageInsumo),
-);
+router.delete('/:id', decodeJWT, checkRole('ADMIN'), deleteInsumoController(manageInsumo));
 
 router.post(
   '/bulk-upload',

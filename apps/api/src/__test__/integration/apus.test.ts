@@ -113,7 +113,9 @@ describe('APUs endpoints', () => {
   describe('DELETE /api/v1/apus/:id/insumos/:itemId', () => {
     test('should remove insumo from APU for ADMIN', async () => {
       const res = await request(app)
-        .delete('/api/v1/apus/770e8400-e29b-41d4-a716-446655440002/insumos/880e8400-e29b-41d4-a716-446655440003')
+        .delete(
+          '/api/v1/apus/770e8400-e29b-41d4-a716-446655440002/insumos/880e8400-e29b-41d4-a716-446655440003',
+        )
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(204);

@@ -1,7 +1,7 @@
-import { describe, expect, test, mock } from 'bun:test';
-import { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
-import type { InsumoRepository } from '@proarq/core/application/ports/out/insumo-repository.port';
+import { describe, expect, mock, test } from 'bun:test';
 import type { AuditRepository } from '@proarq/core/application/ports/out/audit-repository.port';
+import type { InsumoRepository } from '@proarq/core/application/ports/out/insumo-repository.port';
+import { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
 import { AppError } from '@proarq/core/errors';
 
 const mockInsumo = {
@@ -25,7 +25,7 @@ describe('ManageInsumoUseCase', () => {
         findById: mock(async () => mockInsumo),
         findByCodigo: mock(async () => null),
         create: mock(async (data) => ({ ...mockInsumo, ...data })),
-        update: mock(async (id, data) => ({ ...mockInsumo, ...data })),
+        update: mock(async (_id, data) => ({ ...mockInsumo, ...data })),
         delete: mock(async () => {}),
         bulkInsert: mock(async (rows) => ({ imported: rows.length, skipped: 0 })),
       };
@@ -50,7 +50,7 @@ describe('ManageInsumoUseCase', () => {
 
     test('should list insumos with filters', async () => {
       const mockInsumoRepo: InsumoRepository = {
-        findAll: mock(async (filters) => mockInsumoList),
+        findAll: mock(async (_filters) => mockInsumoList),
         findById: mock(async () => mockInsumo),
         findByCodigo: mock(async () => null),
         create: mock(async () => mockInsumo),
@@ -92,7 +92,7 @@ describe('ManageInsumoUseCase', () => {
       const result = await useCase.findById('660e8400-e29b-41d4-a716-446655440001');
 
       expect(result).toBeDefined();
-      expect(result!.id).toBe('660e8400-e29b-41d4-a716-446655440001');
+      expect(result?.id).toBe('660e8400-e29b-41d4-a716-446655440001');
     });
 
     test('should update an insumo', async () => {
@@ -101,7 +101,7 @@ describe('ManageInsumoUseCase', () => {
         findById: mock(async () => mockInsumo),
         findByCodigo: mock(async () => null),
         create: mock(async () => mockInsumo),
-        update: mock(async (id, data) => ({ ...mockInsumo, ...data })),
+        update: mock(async (_id, data) => ({ ...mockInsumo, ...data })),
         delete: mock(async () => {}),
         bulkInsert: mock(async () => ({ imported: 0, skipped: 0 })),
       };
@@ -129,7 +129,9 @@ describe('ManageInsumoUseCase', () => {
         findByCodigo: mock(async () => null),
         create: mock(async () => mockInsumo),
         update: mock(async () => mockInsumo),
-        delete: mock(async (id) => { deleted = true; }),
+        delete: mock(async (_id) => {
+          deleted = true;
+        }),
         bulkInsert: mock(async () => ({ imported: 0, skipped: 0 })),
       };
       const mockAuditRepo: AuditRepository = {
@@ -138,7 +140,10 @@ describe('ManageInsumoUseCase', () => {
       };
 
       const useCase = new ManageInsumoUseCase(mockInsumoRepo, mockAuditRepo);
-      await useCase.delete('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440000');
+      await useCase.delete(
+        '660e8400-e29b-41d4-a716-446655440001',
+        '550e8400-e29b-41d4-a716-446655440000',
+      );
 
       expect(deleted).toBe(true);
     });

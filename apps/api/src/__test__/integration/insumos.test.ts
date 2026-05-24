@@ -152,7 +152,13 @@ describe('Insumos endpoints', () => {
       const res = await request(app)
         .post('/api/v1/insumos/bulk-upload')
         .set('Authorization', `Bearer ${adminToken}`)
-        .attach('file', Buffer.from('codigo,nombre,unidad,cost_base\nMAT-001,Material 1,KG,100.00\nMAT-002,Material 2,UND,50.00'), 'insumos.csv');
+        .attach(
+          'file',
+          Buffer.from(
+            'codigo,nombre,unidad,cost_base\nMAT-001,Material 1,KG,100.00\nMAT-002,Material 2,UND,50.00',
+          ),
+          'insumos.csv',
+        );
 
       expect(res.status).toBe(201);
       expect(res.body.data).toBeDefined();

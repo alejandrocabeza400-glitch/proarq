@@ -1,5 +1,5 @@
-import { AppError } from './app.error';
 import type { ZodError } from 'zod';
+import { AppError } from './app.error';
 
 export class ValidationError extends AppError {
   public readonly details: ZodError['issues'];

@@ -1,20 +1,26 @@
-import { Router } from 'express';
-import { decodeJWT, checkRole } from '../middleware/auth.middleware';
-import { validate } from '../middleware/validate.middleware';
+import {
+  addApuInsumoSchema,
+  createApuSchema,
+  updateApuSchema,
+} from '@proarq/core/application/ports/in/apu.input';
 import { ManageApuUseCase } from '@proarq/core/application/use-cases/manage-apu.use-case';
-import { createApuSchema, updateApuSchema, addApuInsumoSchema } from '@proarq/core/application/ports/in/apu.input';
+import { Router } from 'express';
 import { postgresApuRepo } from '../../driven/repositories/postgres-apu.repository';
+import { postgresAuditRepo } from '../../driven/repositories/postgres-audit.repository';
 import { postgresInsumoRepo } from '../../driven/repositories/postgres-insumo.repository';
 import {
-  createApuController,
-  listApusController,
-  getApuController,
-  updateApuController,
   addApuInsumoController,
+  createApuController,
+  exportPdfApusController,
+  getApuController,
+  listApusController,
   removeApuInsumoController,
+  updateApuController,
 } from '../controllers/apu.controller';
+import { checkRole, decodeJWT } from '../middleware/auth.middleware';
+import { validate } from '../middleware/validate.middleware';
 
-const manageApu = new ManageApuUseCase(postgresApuRepo, postgresInsumoRepo);
+const manageApu = new ManageApuUseCase(postgresApuRepo, postgresInsumoRepo, postgresAuditRepo);
 
 export const router = Router();
 
@@ -28,15 +34,13 @@ router.post(
   createApuController(manageApu),
 );
 
-router.get(
-  '/',
-  decodeJWT,
-  checkRole(...operRoles),
-  listApusController(manageApu),
-);
+router.get('/pdf', decodeJWT, checkRole(...operRoles), exportPdfApusController(manageApu));
+
+router.get('/', decodeJWT, checkRole(...operRoles), listApusController(manageApu));
 
 router.get(
   '/:id',
+
   decodeJWT,
   checkRole(...operRoles),
   getApuController(manageApu),

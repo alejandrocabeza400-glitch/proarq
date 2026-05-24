@@ -1,9 +1,12 @@
+import { NotFoundError } from '@proarq/core';
+import type {
+  UserFilters,
+  UserRepository,
+} from '@proarq/core/application/ports/out/user-repository.port';
+import type { User } from '@proarq/core/domain/entities/user.entity';
+import { and, eq, like, sql } from 'drizzle-orm';
 import { db } from '../database/connection';
 import { users } from '../database/schema/user.schema';
-import { eq, like, and, sql } from 'drizzle-orm';
-import type { UserRepository, UserFilters } from '@proarq/core/application/ports/out/user-repository.port';
-import type { User } from '@proarq/core/domain/entities/user.entity';
-import { NotFoundError } from '@proarq/core';
 
 /** Postgres adapter that implements the UserRepository port. */
 export const postgresUserRepo: UserRepository = {
@@ -60,10 +63,7 @@ export const postgresUserRepo: UserRepository = {
     return user;
   },
 
-  async update(
-    id: string,
-    data: Partial<Pick<User, 'name' | 'email' | 'role'>>,
-  ): Promise<User> {
+  async update(id: string, data: Partial<Pick<User, 'name' | 'email' | 'role'>>): Promise<User> {
     const [user] = await db
       .update(users)
       .set({ ...data, updatedAt: sql`NOW()` })
@@ -94,10 +94,7 @@ export const postgresUserRepo: UserRepository = {
   },
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ passwordHash, updatedAt: sql`NOW()` })
-      .where(eq(users.id, userId));
+    await db.update(users).set({ passwordHash, updatedAt: sql`NOW()` }).where(eq(users.id, userId));
   },
 
   async updateResetToken(userId: string, tokenHash: string, expiry: Date): Promise<void> {

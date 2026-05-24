@@ -1,11 +1,14 @@
+import { NotFoundError } from '@proarq/core';
+import type {
+  ApuFilters,
+  ApuRepository,
+} from '@proarq/core/application/ports/out/apu-repository.port';
+import type { Apu } from '@proarq/core/domain/entities/apu.entity';
+import type { ApuInsumo } from '@proarq/core/domain/entities/apu-insumo.entity';
+import { and, eq, like, sql } from 'drizzle-orm';
 import { db } from '../database/connection';
 import { apus } from '../database/schema/apu.schema';
 import { apuInsumos } from '../database/schema/apu-insumo.schema';
-import { eq, like, and, sql } from 'drizzle-orm';
-import type { ApuRepository, ApuFilters } from '@proarq/core/application/ports/out/apu-repository.port';
-import type { Apu } from '@proarq/core/domain/entities/apu.entity';
-import type { ApuInsumo } from '@proarq/core/domain/entities/apu-insumo.entity';
-import { NotFoundError } from '@proarq/core';
 
 export const postgresApuRepo: ApuRepository = {
   async findAll(filters?: ApuFilters): Promise<Apu[]> {
@@ -31,10 +34,7 @@ export const postgresApuRepo: ApuRepository = {
     const [apuResult] = await db.select().from(apus).where(eq(apus.id, id)).limit(1);
     if (!apuResult) return null;
 
-    const items = await db
-      .select()
-      .from(apuInsumos)
-      .where(eq(apuInsumos.apuId, id));
+    const items = await db.select().from(apuInsumos).where(eq(apuInsumos.apuId, id));
 
     return { ...apuResult, items: items || [] };
   },
@@ -62,19 +62,12 @@ export const postgresApuRepo: ApuRepository = {
     return apu;
   },
 
-  async update(
-    id: string,
-    data: { nombre?: string; tipo?: string },
-  ): Promise<Apu> {
+  async update(id: string, data: { nombre?: string; tipo?: string }): Promise<Apu> {
     const updateData: Record<string, any> = { updatedAt: sql`NOW()` };
     if (data.nombre !== undefined) updateData.nombre = data.nombre;
     if (data.tipo !== undefined) updateData.tipo = data.tipo;
 
-    const [apu] = await db
-      .update(apus)
-      .set(updateData)
-      .where(eq(apus.id, id))
-      .returning();
+    const [apu] = await db.update(apus).set(updateData).where(eq(apus.id, id)).returning();
 
     if (!apu) throw new NotFoundError('APU');
     return apu;
@@ -117,11 +110,7 @@ export const postgresApuRepo: ApuRepository = {
   },
 
   async findInsumoById(itemId: string): Promise<ApuInsumo | null> {
-    const result = await db
-      .select()
-      .from(apuInsumos)
-      .where(eq(apuInsumos.id, itemId))
-      .limit(1);
+    const result = await db.select().from(apuInsumos).where(eq(apuInsumos.id, itemId)).limit(1);
     return result[0] ?? null;
   },
 };

@@ -34,6 +34,7 @@ describe('Swagger Documentation', () => {
         '/api/v1/cotizaciones',
         '/api/v1/audit-logs',
         '/api/v1/sincronizar',
+        '/api/v1/proyectos',
       ];
 
       for (const path of expectedPaths) {

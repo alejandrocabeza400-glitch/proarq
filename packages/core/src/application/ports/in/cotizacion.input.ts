@@ -20,9 +20,18 @@ export const updateCotizacionSchema = z.object({
   estado: cotizacionEstadoEnum.optional(),
   clienteId: z.string().uuid().optional().nullable(),
   items: z.array(cotizacionItemInputSchema).optional(),
-  factorAPercentage: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
-  factorBPercentage: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
-  profitMarginPercent: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
+  factorAPercentage: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
+  factorBPercentage: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
+  profitMarginPercent: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .optional(),
 });
 
 export type UpdateCotizacionInput = z.infer<typeof updateCotizacionSchema>;

@@ -14,7 +14,10 @@ export type CreateInsumoInput = z.infer<typeof createInsumoSchema>;
 export const updateInsumoSchema = z.object({
   nombre: z.string().min(1).max(255).optional(),
   unidad: unidadEnum.optional(),
-  costBase: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid cost base format').optional(),
+  costBase: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Invalid cost base format')
+    .optional(),
 });
 
 export type UpdateInsumoInput = z.infer<typeof updateInsumoSchema>;
