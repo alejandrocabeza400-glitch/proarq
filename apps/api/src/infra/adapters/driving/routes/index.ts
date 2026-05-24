@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { router as healthRouter } from './health.routes';
 import { router as userRouter } from './user.routes';
 import { router as authRouter } from './auth.routes';
@@ -7,19 +7,60 @@ import { router as apuRouter } from './apu.routes';
 import { router as cotizacionRouter } from './cotizacion.routes';
 import { router as auditRouter } from './audit.routes';
 import { router as syncRouter } from './sync.routes';
+import { env } from '../../../config/env';
+import {
+  swaggerSpec,
+  swaggerServe,
+  swaggerSetupHandler,
+} from '../swagger/swagger-ui';
 
-const router = Router();
-const api = Router();
+// ---------------------------------------------------------------------------
+// Factory: create a fresh router
+// ---------------------------------------------------------------------------
+export function createRouter(): Router {
+  const router = Router();
+  const api = Router();
 
-api.use('/health', healthRouter);
-api.use('/auth', authRouter);
-api.use('/users', userRouter);
-api.use('/insumos', insumoRouter);
-api.use('/apus', apuRouter);
-api.use('/cotizaciones', cotizacionRouter);
-api.use('/audit-logs', auditRouter);
-api.use('/sincronizar', syncRouter);
+  // ---- API routes ----
+  api.use('/health', healthRouter);
+  api.use('/auth', authRouter);
+  api.use('/users', userRouter);
+  api.use('/insumos', insumoRouter);
+  api.use('/apus', apuRouter);
+  api.use('/cotizaciones', cotizacionRouter);
+  api.use('/audit-logs', auditRouter);
+  api.use('/sincronizar', syncRouter);
 
-router.use('/api/v1', api);
+  router.use('/api/v1', api);
 
-export { router };
+  // ---- Raw OpenAPI spec - runtime check ----
+  router.get('/api/v1/docs.json', (_req: Request, res: Response, next: NextFunction) => {
+    if (!env.SWAGGER_ENABLED) {
+      return next('route');
+    }
+    res.json(swaggerSpec);
+  });
+
+  // ---- Swagger UI at root path / - runtime check ----
+  router.use('/', (req: Request, res: Response, next: NextFunction) => {
+    if (!env.SWAGGER_ENABLED) {
+      return next('route');
+    }
+
+    let idx = 0;
+    const run = (err?: unknown) => {
+      if (err) return next(err);
+      if (idx < swaggerServe.length) {
+        swaggerServe[idx++](req, res, run as NextFunction);
+      } else {
+        swaggerSetupHandler(req, res, next);
+      }
+    };
+    run();
+  });
+
+  return router;
+}
+
+// ---- Singleton router for normal use ----
+export const router = createRouter();

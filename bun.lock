@@ -5,7 +5,7 @@
       "name": "proarq",
       "devDependencies": {
         "@biomejs/biome": "2.4.15",
-        "@types/bun": "latest",
+        "@types/bun": "1.3.14",
       },
       "peerDependencies": {
         "typescript": "5",
@@ -16,29 +16,32 @@
       "version": "0.0.1",
       "dependencies": {
         "@proarq/core": "workspace:*",
-        "cors": "latest",
+        "cors": "2.8.6",
         "csv-parse": "6.2.1",
         "decimal.js": "10.6.0",
         "deep-diff": "1.0.2",
-        "drizzle-orm": "latest",
-        "express": "latest",
+        "drizzle-orm": "0.45.2",
+        "express": "5.2.1",
         "jsonwebtoken": "9.0.3",
         "multer": "2.1.1",
         "pdfkit": "0.18.0",
-        "postgres": "latest",
-        "zod": "latest",
+        "postgres": "3.4.9",
+        "swagger-ui-dist": "^5.0.0",
+        "swagger-ui-express": "^5.0.1",
+        "zod": "4.4.3",
       },
       "devDependencies": {
         "@types/bun": "1.3.14",
-        "@types/cors": "latest",
+        "@types/cors": "2.8.19",
         "@types/deep-diff": "1.0.5",
-        "@types/express": "latest",
+        "@types/express": "5.0.6",
         "@types/jsonwebtoken": "9.0.10",
         "@types/multer": "2.1.0",
         "@types/pdfkit": "0.17.6",
-        "@types/supertest": "latest",
-        "drizzle-kit": "latest",
-        "supertest": "latest",
+        "@types/supertest": "7.2.0",
+        "@types/swagger-ui-express": "^4.0.0",
+        "drizzle-kit": "0.31.10",
+        "supertest": "7.2.2",
       },
     },
     "packages/core": {
@@ -46,7 +49,7 @@
       "version": "0.0.1",
       "dependencies": {
         "decimal.js": "10.6.0",
-        "zod": "latest",
+        "zod": "4.4.3",
       },
     },
   },
@@ -137,6 +140,8 @@
 
     "@proarq/core": ["@proarq/core@workspace:packages/core"],
 
+    "@scarf/scarf": ["@scarf/scarf@1.4.0", "", {}, "sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ=="],
+
     "@swc/helpers": ["@swc/helpers@0.5.21", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-jI/VAmtdjB/RnI8GTnokyX7Ug8c+g+ffD6QRLa6XQewtnGyukKkKSk3wLTM3b5cjt1jNh9x0jfVlagdN2gDKQg=="],
 
     "@types/body-parser": ["@types/body-parser@1.19.6", "", { "dependencies": { "@types/connect": "*", "@types/node": "*" } }, "sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g=="],
@@ -180,6 +185,8 @@
     "@types/superagent": ["@types/superagent@8.1.10", "", { "dependencies": { "@types/cookiejar": "^2.1.5", "@types/methods": "^1.1.4", "@types/node": "*", "form-data": "^4.0.0" } }, "sha512-nbt4IWXABhW0jGmmpRzCFNlbmwCTzZ2gTUsNIr+X+ItdqPms+PAJZbWsNzpS2USqXjcoNLQcO6nXo60zcPQiIg=="],
 
     "@types/supertest": ["@types/supertest@7.2.0", "", { "dependencies": { "@types/methods": "^1.1.4", "@types/superagent": "^8.1.0" } }, "sha512-uh2Lv57xvggst6lCqNdFAmDSvoMG7M/HDtX4iUCquxQ5EGPtaPM5PL5Hmi7LCvOG8db7YaCPNJEeoI8s/WzIQw=="],
+
+    "@types/swagger-ui-express": ["@types/swagger-ui-express@4.1.8", "", { "dependencies": { "@types/express": "*", "@types/serve-static": "*" } }, "sha512-AhZV8/EIreHFmBV5wAs0gzJUNq9JbbSXgJLQubCC0jtIo6prnI9MIRRxnU4MZX9RB9yXxF1V4R7jtLl/Wcj31g=="],
 
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 
@@ -458,6 +465,10 @@
     "superagent": ["superagent@10.3.0", "", { "dependencies": { "component-emitter": "^1.3.1", "cookiejar": "^2.1.4", "debug": "^4.3.7", "fast-safe-stringify": "^2.1.1", "form-data": "^4.0.5", "formidable": "^3.5.4", "methods": "^1.1.2", "mime": "2.6.0", "qs": "^6.14.1" } }, "sha512-B+4Ik7ROgVKrQsXTV0Jwp2u+PXYLSlqtDAhYnkkD+zn3yg8s/zjA2MeGayPoY/KICrbitwneDHrjSotxKL+0XQ=="],
 
     "supertest": ["supertest@7.2.2", "", { "dependencies": { "cookie-signature": "^1.2.2", "methods": "^1.1.2", "superagent": "^10.3.0" } }, "sha512-oK8WG9diS3DlhdUkcFn4tkNIiIbBx9lI2ClF8K+b2/m8Eyv47LSawxUzZQSNKUrVb2KsqeTDCcjAAVPYaSLVTA=="],
+
+    "swagger-ui-dist": ["swagger-ui-dist@5.32.6", "", { "dependencies": { "@scarf/scarf": "=1.4.0" } }, "sha512-75ttZNaYCLoFPnozPZcTUU6mS3wKT8l7WLjU5zJSHFeJa23i5vtnze6IiCl4jDMPeQTXVXIgovq4M11NNfQvSA=="],
+
+    "swagger-ui-express": ["swagger-ui-express@5.0.1", "", { "dependencies": { "swagger-ui-dist": ">=5.0.0" }, "peerDependencies": { "express": ">=4.0.0 || >=5.0.0-beta" } }, "sha512-SrNU3RiBGTLLmFU8GIJdOdanJTl4TOmT27tt3bWWHppqYmAZ6IDuEuBvMU6nZq0zLEe6b/1rACXCgLZqO6ZfrA=="],
 
     "tiny-inflate": ["tiny-inflate@1.0.3", "", {}, "sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw=="],
 

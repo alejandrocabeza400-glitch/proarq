@@ -10,9 +10,28 @@ const envSchema = z.object({
   PDF_UPLOAD_DIR: z.string().default('./uploads/pdf'),
   LOGO_URL: z.string().default(''),
   DATABASE_URL_TEST: z.string().url().optional(),
+  SWAGGER_ENABLED: z.preprocess(
+    (v) => (v === undefined ? undefined : v === 'true' || v === '1'),
+    z.boolean(),
+  ).default(true),
 });
 
 // Merge Bun.env and process.env to handle --env-file loading
 const mergedEnv = { ...Bun.env, ...process.env };
 
-export const env = envSchema.parse(mergedEnv);
+const _env = envSchema.parse(mergedEnv);
+
+// Override SWAGGER_ENABLED with a dynamic getter that re-reads process.env on
+// every access. This allows tests to toggle the flag at runtime without
+// re-loading modules (the Zod parse above captures the static value once).
+Object.defineProperty(_env, 'SWAGGER_ENABLED', {
+  get() {
+    const val = process.env.SWAGGER_ENABLED;
+    if (val === undefined) return true;
+    return val === 'true' || val === '1';
+  },
+  enumerable: true,
+  configurable: true,
+});
+
+export const env = _env;

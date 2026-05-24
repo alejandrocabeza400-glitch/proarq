@@ -75,10 +75,54 @@ All environment variables are validated at startup via Zod schema in `src/infra/
 | `PDF_UPLOAD_DIR` | ❌ | `./uploads/pdf` | Directory for PDF uploads |
 | `LOGO_URL` | ❌ | `''` | Company logo URL for PDF generation |
 | `DATABASE_URL_TEST` | ❌ | — | Separate test database URL |
+| `SWAGGER_ENABLED` | ❌ | `true` | Enable/disable Swagger UI at `/` |
 
 The `.env` file is loaded from the monorepo root (`../../.env`) via Bun's `--env-file` flag. A minimal template is available at `apps/api/.env.example`.
 
 ---
+
+
+---
+
+## Swagger UI (API Documentation)
+
+Interactive API documentation is available via **Swagger UI** (OpenAPI 3.0.3).
+
+### Access
+
+- **Swagger UI**: Open [http://localhost:8000/](http://localhost:8000/) in your browser.
+- **Raw OpenAPI spec**: `GET /api/v1/docs.json`
+
+### Usage
+
+1. Open [http://localhost:8000/](http://localhost:8000/)
+2. All 28+ API endpoints are documented with request/response schemas
+3. Click **Authorize** (top-right) to enter your JWT token
+4. Try any endpoint directly from the browser
+
+### Disable in Production
+
+Set `SWAGGER_ENABLED=false` in your `.env` file to disable Swagger UI (returns 404).
+
+---
+
+## Postman Collection
+
+A complete Postman Collection v2.1 is available at `apps/api/documentacion/postman.json`.
+
+### Import
+
+1. Open Postman > **Import** > Select `apps/api/documentacion/postman.json`
+2. The collection includes all endpoints organized by module (Health, Auth, Users, Insumos, APUs, Cotizaciones, Audit Logs, Sync)
+3. Set the `base_url` variable (default: `http://localhost:8000`)
+4. Set the `token` variable with your JWT after login
+
+### Variables
+
+The collection includes these variables:
+- `base_url`: API base URL (default: `http://localhost:8000`)
+- `token`: JWT Bearer token placeholder
+- `user_id`, `insumo_id`, `apu_id`, `apu_insumo_id`, `cotizacion_id`: Path parameter placeholders
 
 ## Directory Structure
 
