@@ -9,29 +9,29 @@ import PDFDocument from 'pdfkit';
 const DESIGN = {
   colors: {
     // Primary palette
-    primary: '#0D9488',        // Teal 600 — brand primary
-    primaryDark: '#0F766E',    // Teal 700 — darker for headers/bars
-    primaryLight: '#14B8A6',   // Teal 500 — lighter accent
-    primaryBg: '#F0FDFA',      // Teal 50 — very light background
-    primaryBgAlt: '#CCFBF1',   // Teal 100 — alternate row color
+    primary: '#0D9488', // Teal 600 — brand primary
+    primaryDark: '#0F766E', // Teal 700 — darker for headers/bars
+    primaryLight: '#14B8A6', // Teal 500 — lighter accent
+    primaryBg: '#F0FDFA', // Teal 50 — very light background
+    primaryBgAlt: '#CCFBF1', // Teal 100 — alternate row color
 
     // Neutral palette
-    dark: '#0F172A',           // Slate 900 — main headings
-    text: '#1E293B',           // Slate 800 — body text
-    muted: '#64748B',          // Slate 500 — secondary text
-    subtle: '#94A3B8',         // Slate 400 — very subtle text
-    border: '#CBD5E1',         // Slate 300 — light borders
-    divider: '#E2E8F0',        // Slate 200 — subtle dividers
+    dark: '#0F172A', // Slate 900 — main headings
+    text: '#1E293B', // Slate 800 — body text
+    muted: '#64748B', // Slate 500 — secondary text
+    subtle: '#94A3B8', // Slate 400 — very subtle text
+    border: '#CBD5E1', // Slate 300 — light borders
+    divider: '#E2E8F0', // Slate 200 — subtle dividers
     white: '#FFFFFF',
     pageBg: '#FFFFFF',
 
     // Accent
-    gold: '#F59E0B',           // Amber — status/highlights
-    success: '#10B981',        // Green — positive states
-    error: '#EF4444',          // Red — negative states
+    gold: '#F59E0B', // Amber — status/highlights
+    success: '#10B981', // Green — positive states
+    error: '#EF4444', // Red — negative states
 
     // Table
-    tableHeaderBg: '#0D9488',  // Teal header
+    tableHeaderBg: '#0D9488', // Teal header
     tableHeaderText: '#FFFFFF',
     tableBorder: '#CBD5E1',
   },
@@ -90,14 +90,10 @@ function drawPageHeader(
 
   // --- Full-width header bar with gradient effect ---
   // Main bar
-  doc
-    .rect(0, 0, pageW, headerBarHeight)
-    .fill(DESIGN.colors.primaryDark);
+  doc.rect(0, 0, pageW, headerBarHeight).fill(DESIGN.colors.primaryDark);
 
   // Accent stripe at bottom of header bar
-  doc
-    .rect(0, headerBarHeight - 4, pageW, 4)
-    .fill(DESIGN.colors.primaryLight);
+  doc.rect(0, headerBarHeight - 4, pageW, 4).fill(DESIGN.colors.primaryLight);
 
   // --- Brand watermark text ---
   doc
@@ -120,9 +116,7 @@ function drawPageHeader(
     .text(title, marginX, 56, { align: 'left' });
 
   // Decorative small line under title
-  doc
-    .rect(marginX, 82, 50, 3)
-    .fill(DESIGN.colors.gold);
+  doc.rect(marginX, 82, 50, 3).fill(DESIGN.colors.gold);
 
   // --- Page number top right ---
   doc
@@ -158,35 +152,27 @@ function drawPageFooter(doc: PDFKit.PDFDocument, dateStr: string): void {
     .fillColor(DESIGN.colors.subtle)
     .fontSize(7)
     .font('Helvetica')
-    .text(
-      '© ProArq — Documento Confidencial',
-      marginX,
-      footerY + 6,
-      { align: 'left', width: (pageW - 2 * marginX) / 2 },
-    );
+    .text('© ProArq — Documento Confidencial', marginX, footerY + 6, {
+      align: 'left',
+      width: (pageW - 2 * marginX) / 2,
+    });
 
   // Date right
   doc
     .fillColor(DESIGN.colors.subtle)
     .fontSize(7)
     .font('Helvetica')
-    .text(
-      `Generado: ${dateStr}`,
-      marginX,
-      footerY + 6,
-      { align: 'right', width: (pageW - 2 * marginX) / 2 },
-    );
+    .text(`Generado: ${dateStr}`, marginX, footerY + 6, {
+      align: 'right',
+      width: (pageW - 2 * marginX) / 2,
+    });
 }
 
 // ---------------------------------------------------------------------------
 // Helper: draw metadata section
 // ---------------------------------------------------------------------------
 
-function drawMetadata(
-  doc: PDFKit.PDFDocument,
-  dateStr: string,
-  generatedBy?: string,
-): void {
+function drawMetadata(doc: PDFKit.PDFDocument, dateStr: string, generatedBy?: string): void {
   const { marginX } = DESIGN.spacing;
   const startY = DESIGN.spacing.headerBarHeight + 20;
 
@@ -203,10 +189,7 @@ function drawMetadata(
     .fill();
 
   // Metadata content
-  doc
-    .fillColor(DESIGN.colors.muted)
-    .fontSize(DESIGN.fonts.body)
-    .font('Helvetica');
+  doc.fillColor(DESIGN.colors.muted).fontSize(DESIGN.fonts.body).font('Helvetica');
 
   const textX = marginX + 14;
   if (generatedBy) {
@@ -256,7 +239,10 @@ function drawTable(
     .fill();
 
   // Header text
-  doc.fillColor(DESIGN.colors.tableHeaderText).font('Helvetica-Bold').fontSize(DESIGN.fonts.tableHeader);
+  doc
+    .fillColor(DESIGN.colors.tableHeaderText)
+    .font('Helvetica-Bold')
+    .fontSize(DESIGN.fonts.tableHeader);
   let hX = startX;
   for (const col of columns) {
     doc.text(col.header, hX + cellPaddingX, headerY + 6, {
@@ -382,9 +368,6 @@ export function generatePdfReport(
       const totalColWidth = columns.reduce((sum, c) => sum + c.width, 0);
       const pageContentWidth = doc.page.width - 2 * DESIGN.spacing.marginX;
       if (Math.abs(totalColWidth - pageContentWidth) > 1) {
-        console.warn(
-          `[ProArq PDF] Column widths (${totalColWidth}) ≠ content width (${pageContentWidth}) for "${title}"`,
-        );
       }
 
       drawTable(doc, columns, data);

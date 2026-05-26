@@ -110,29 +110,25 @@ export const postgresInsumoRepo: InsumoRepository = {
       createdBy?: string;
     }>,
   ): Promise<{ imported: number; skipped: number }> {
-    let imported = 0;
+    if (rows.length === 0) return { imported: 0, skipped: 0 };
 
-    // Process in chunks of 50
-    const chunkSize = 50;
-    for (let i = 0; i < rows.length; i += chunkSize) {
-      const chunk = rows.slice(i, i + chunkSize);
+    const result = await db
+      .insert(insumosMaestro)
+      .values(
+        rows.map((row) => ({
+          codigo: row.codigo,
+          nombre: row.nombre,
+          unidad: row.unidad,
+          costBase: row.costBase,
+          createdBy: row.createdBy || null,
+        })),
+      )
+      .onConflictDoNothing({ target: insumosMaestro.codigo })
+      .returning();
 
-      for (const row of chunk) {
-        try {
-          await db.insert(insumosMaestro).values({
-            codigo: row.codigo,
-            nombre: row.nombre,
-            unidad: row.unidad,
-            costBase: row.costBase,
-            createdBy: row.createdBy || null,
-          });
-          imported++;
-        } catch {
-          // Skip on conflict
-        }
-      }
-    }
-
-    return { imported, skipped: rows.length - imported };
+    return {
+      imported: result.length,
+      skipped: rows.length - result.length,
+    };
   },
 };

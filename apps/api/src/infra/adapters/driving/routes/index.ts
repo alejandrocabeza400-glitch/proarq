@@ -1,6 +1,7 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import { env } from '../../../config/env';
 import { swaggerServe, swaggerSetupHandler, swaggerSpec } from '../swagger/swagger-ui';
+import { router as analyticsRouter } from './analytics.routes';
 import { router as apuRouter } from './apu.routes';
 import { router as auditRouter } from './audit.routes';
 import { router as authRouter } from './auth.routes';
@@ -19,6 +20,7 @@ export function createRouter(): Router {
   const api = Router();
 
   // ---- API routes ----
+  api.use('/analytics', analyticsRouter);
   api.use('/health', healthRouter);
   api.use('/auth', authRouter);
   api.use('/users', userRouter);

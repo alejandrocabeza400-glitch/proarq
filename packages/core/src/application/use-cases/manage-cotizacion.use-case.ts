@@ -138,4 +138,34 @@ export class ManageCotizacionUseCase {
 
     return updated;
   }
+
+  async delete(id: string, actorUserId?: string): Promise<void> {
+    const existing = await this.cotizacionRepo.findById(id);
+    if (!existing) {
+      throw new AppError('Cotizacion not found', 404);
+    }
+
+    // APROBADA guard
+    if (existing.estado === 'APROBADA') {
+      throw new AppError('Cannot delete an approved cotizacion', 400);
+    }
+
+    await this.cotizacionRepo.delete(id);
+
+    if (this.auditRepo && actorUserId) {
+      await this.auditRepo.create({
+        tableName: 'cotizaciones',
+        recordId: id,
+        action: 'DELETE',
+        userId: actorUserId,
+        dataHistory: {
+          before: {
+            codigo: existing.codigo,
+            estado: existing.estado,
+          },
+          after: {},
+        },
+      });
+    }
+  }
 }

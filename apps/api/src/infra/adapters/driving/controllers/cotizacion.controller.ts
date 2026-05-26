@@ -60,6 +60,17 @@ export function updateCotizacionController(useCase: ManageCotizacionUseCase) {
   };
 }
 
+export function deleteCotizacionController(useCase: ManageCotizacionUseCase) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await useCase.delete(req.params.id, req.user?.sub);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 export function branchCotizacionController(useCase: BranchCotizacionUseCase) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -105,25 +116,25 @@ const APA = {
   font: 'Times-Roman',
   fontBold: 'Times-Bold',
   fontItalic: 'Times-Italic',
-  size: 12,          // body
-  sizeSmall: 10,     // table / notes
-  sizeTitle: 14,     // title
-  sizeHeading: 12,   // section headings
-  leading: 18,       // 1,5 × 12 pt
-  smallLeading: 15,  // 1,5 × 10 pt
-  indent: 36,        // 0,5 pulgada para sangría
+  size: 12, // body
+  sizeSmall: 10, // table / notes
+  sizeTitle: 14, // title
+  sizeHeading: 12, // section headings
+  leading: 18, // 1,5 × 12 pt
+  smallLeading: 15, // 1,5 × 10 pt
+  indent: 36, // 0,5 pulgada para sangría
 };
 
 const MW = 612 - 2 * APA.margin; // = 468 pt de ancho de contenido
 
 // Colores APA — sobrios, profesionales
 const C = {
-  text: '#1E293B',    // Slate 800 — cuerpo
-  muted: '#475569',   // Slate 600 — metadatos
-  subtle: '#94A3B8',  // Slate 400 — notas
-  border: '#334155',  // Slate 700 — líneas de tabla
-  accent: '#0F766E',  // Teal 700 — acento sutil
-  gold: '#B45309',    // Amber 700 — para resaltar total
+  text: '#1E293B', // Slate 800 — cuerpo
+  muted: '#475569', // Slate 600 — metadatos
+  subtle: '#94A3B8', // Slate 400 — notas
+  border: '#334155', // Slate 700 — líneas de tabla
+  accent: '#0F766E', // Teal 700 — acento sutil
+  gold: '#B45309', // Amber 700 — para resaltar total
 };
 
 // =====================================================================
@@ -139,7 +150,7 @@ function fmt$(val: number | string | undefined | null): string {
 }
 
 /** Calcula la altura de un bloque de texto */
-function textHeight(text: string, width: number, fontSize: number, leading: number): number {
+function _textHeight(text: string, width: number, fontSize: number, leading: number): number {
   // Estimación: cada ~90 caracteres es una línea con fuente 12pt
   const charsPerLine = Math.floor(width / (fontSize * 0.55));
   const lines = Math.max(1, Math.ceil(text.length / charsPerLine));
@@ -190,7 +201,9 @@ function h1APA(doc: PDFKit.PDFDocument, number: string, title: string): void {
     doc.addPage();
   }
   // Línea separadora sutil (opcional APA, ayuda visual)
-  doc.strokeColor(C.subtle).lineWidth(0.3)
+  doc
+    .strokeColor(C.subtle)
+    .lineWidth(0.3)
     .moveTo(APA.margin, doc.y)
     .lineTo(APA.margin + MW, doc.y)
     .stroke();
@@ -260,7 +273,9 @@ function apaTable(
   const y0 = doc.y;
 
   // --- Top border (double line APA style) ---
-  doc.strokeColor(C.border).lineWidth(1.2)
+  doc
+    .strokeColor(C.border)
+    .lineWidth(1.2)
     .moveTo(APA.margin, y0)
     .lineTo(APA.margin + totalW, y0)
     .stroke();
@@ -279,7 +294,9 @@ function apaTable(
 
   // --- Line below header ---
   const y1 = y0 + hdrH;
-  doc.strokeColor(C.border).lineWidth(0.6)
+  doc
+    .strokeColor(C.border)
+    .lineWidth(0.6)
     .moveTo(APA.margin, y1)
     .lineTo(APA.margin + totalW, y1)
     .stroke();
@@ -302,7 +319,9 @@ function apaTable(
 
   // --- Bottom border ---
   const y2 = y1 + rows.length * rowH + 3;
-  doc.strokeColor(C.border).lineWidth(1.2)
+  doc
+    .strokeColor(C.border)
+    .lineWidth(1.2)
     .moveTo(APA.margin, y2)
     .lineTo(APA.margin + totalW, y2)
     .stroke();
@@ -356,23 +375,33 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
       });
 
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=cotizacion-${cotizacion.codigo}.pdf`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=cotizacion-${cotizacion.codigo}.pdf`,
+      );
       doc.pipe(res);
 
       // --- Fechas ---
       const dateStr = new Date().toLocaleDateString('es-ES', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
       const vig = new Date();
       vig.setDate(vig.getDate() + 30);
       const vigStr = vig.toLocaleDateString('es-ES', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
 
       const statusColors: Record<string, string> = {
-        BORRADOR: C.muted, ENVIADA: C.accent, APROBADA: C.accent, RECHAZADA: '#991B1B',
+        BORRADOR: C.muted,
+        ENVIADA: C.accent,
+        APROBADA: C.accent,
+        RECHAZADA: '#991B1B',
       };
-      const statusColor = statusColors[cotizacion.estado] || C.muted;
+      const _statusColor = statusColors[cotizacion.estado] || C.muted;
 
       // ===============================================================
       // PAGE CONTENT — FIRST PASS
@@ -471,7 +500,13 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
         itemRows.push(['No hay partidas registradas', '', '', '']);
       }
 
-      apaTable(doc, itemHeaders, itemColW, itemRows, 'Tabla 1. Desglose de partidas de la cotización.');
+      apaTable(
+        doc,
+        itemHeaders,
+        itemColW,
+        itemRows,
+        'Tabla 1. Desglose de partidas de la cotización.',
+      );
 
       // Totals
       h2APA(doc, 'Resumen de Costos');
@@ -482,7 +517,11 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
         ['Costo Directo Total', '', fmt$(cotizacion.totalCostDirect)],
         ['Factor A', '', cotizacion.factorAPercentage ? `${cotizacion.factorAPercentage}%` : '—'],
         ['Factor B', '', cotizacion.factorBPercentage ? `${cotizacion.factorBPercentage}%` : '—'],
-        ['Margen de Utilidad', '', cotizacion.profitMarginPercent ? `${cotizacion.profitMarginPercent}%` : '—'],
+        [
+          'Margen de Utilidad',
+          '',
+          cotizacion.profitMarginPercent ? `${cotizacion.profitMarginPercent}%` : '—',
+        ],
       ];
 
       apaTable(doc, totHeaders, totColW, totRows);
@@ -490,7 +529,9 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
       // Total final destacado
       if (doc.y + 40 > doc.page.height - APA.margin) doc.addPage();
 
-      doc.strokeColor(C.gold).lineWidth(0.8)
+      doc
+        .strokeColor(C.gold)
+        .lineWidth(0.8)
         .moveTo(APA.margin, doc.y)
         .lineTo(APA.margin + MW, doc.y)
         .stroke();
@@ -504,7 +545,8 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
       doc.fontSize(APA.sizeTitle).font(APA.fontBold);
       doc.fillColor(C.accent);
       doc.text(fmt$(cotizacion.totalAmount), APA.margin, doc.y, {
-        width: MW, align: 'right',
+        width: MW,
+        align: 'right',
       });
       ln(doc, 1.5);
 
@@ -543,23 +585,26 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
       h1APA(doc, '8', 'Cierre y Firmas de Conformidad');
 
       // Texto de aceptación APA (párrafo con sangría)
-      p(doc,
+      p(
+        doc,
         'Al firmar el presente documento, el contratante declara haber leído, entendido y aceptado los términos, ' +
-        'alcances, exclusiones y costos aquí descritos. Esta cotización constituye una oferta formal vinculante ' +
-        'durante su período de vigencia.',
+          'alcances, exclusiones y costos aquí descritos. Esta cotización constituye una oferta formal vinculante ' +
+          'durante su período de vigencia.',
       );
 
       // --- Signature lines ---
       if (doc.y + 60 > doc.page.height - APA.margin) doc.addPage();
 
       ln(doc, 0.5);
-  const sigY = doc.y;
+      const sigY = doc.y;
       const sigW = 200;
-      const sigSpacing = 30;
+      const _sigSpacing = 30;
       const lineY = sigY;
 
       // Proveedor
-      doc.strokeColor(C.border).lineWidth(0.6)
+      doc
+        .strokeColor(C.border)
+        .lineWidth(0.6)
         .moveTo(APA.margin, lineY)
         .lineTo(APA.margin + sigW, lineY)
         .stroke();
@@ -572,7 +617,9 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
 
       // Cliente
       const cX = APA.margin + MW - sigW;
-      doc.strokeColor(C.border).lineWidth(0.6)
+      doc
+        .strokeColor(C.border)
+        .lineWidth(0.6)
         .moveTo(cX, lineY)
         .lineTo(cX + sigW, lineY)
         .stroke();
@@ -596,7 +643,8 @@ export function pdfCotizacionController(getUseCase: ManageCotizacionUseCase) {
         doc.fontSize(APA.size).font(APA.font);
         doc.fillColor(C.text);
         doc.text(String(i + 1), APA.margin + MW - 30, APA.margin - 6, {
-          width: 40, align: 'right',
+          width: 40,
+          align: 'right',
         });
       }
 

@@ -1,0 +1,42 @@
+{
+  "name": "@proarq/mobile",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "bun --env-file=../../.env exec expo start --web --clear",
+    "build": "bun --env-file=../../.env exec expo export --platform web",
+    "test": "bun --env-file=../../.env test",
+    "lint": "biome check --write --unsafe src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "expo-status-bar": "~2.0.0",
+    "expo-linking": "~7.0.0",
+    "expo-constants": "~17.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.0",
+    "react-native-web": "~0.19.0",
+    "react-native-safe-area-context": "~5.0.0",
+    "@react-navigation/native": "~7.0.0",
+    "zustand": "^5.0.0",
+    "axios": "^1.7.0",
+    "zod": "4.4.3",
+    "date-fns": "^4.0.0",
+    "dexie": "^4.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@proarq/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "~18.3.0",
+    "fake-indexeddb": "6.2.5",
+    "happy-dom": "20.9.0",
+    "jsdom": "29.1.1",
+    "typescript": "~5.6.0"
+  }
+}

@@ -23,7 +23,7 @@ async function main() {
   await db.delete(schema.auditLogs);
   await db.delete(schema.users);
 
-  // Seed users
+  // Use a real hash for the seed passwords
   const adminPasswordHash = await Bun.password.hash('valid-password');
   const userPasswordHash = await Bun.password.hash('user-password');
 
@@ -226,6 +226,7 @@ async function main() {
   await queryClient.end();
 }
 
-main().catch((_err) => {
+main().catch((err) => {
+  console.error("Seeding error details:", err);
   process.exit(1);
 });

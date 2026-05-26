@@ -12,18 +12,19 @@ export class ManageInsumoUseCase {
   ) {}
 
   async create(data: {
-    codigo: string;
     nombre: string;
     unidad: string;
     costBase: string;
     createdBy: string;
   }): Promise<Insumo> {
-    const existing = await this.insumoRepo.findByCodigo(data.codigo);
-    if (existing) {
-      throw new AppError('Insumo with this code already exists', 409);
-    }
+    const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const codigo = `INS-${datePart}-${randomPart}`;
 
-    const insumo = await this.insumoRepo.create(data);
+    const insumo = await this.insumoRepo.create({
+      ...data,
+      codigo,
+    });
 
     // Audit log
     await this.auditRepo.create({
@@ -163,27 +164,15 @@ export class ManageInsumoUseCase {
       throw new AppError('Validation failed for bulk upload', 422);
     }
 
-    // Check for duplicate codigos and skip them
-    const rowsToInsert: typeof validRows = [];
-    let skipped = 0;
-    for (const row of validRows) {
-      const existing = await this.insumoRepo.findByCodigo(row.codigo);
-      if (existing) {
-        skipped++;
-      } else {
-        rowsToInsert.push(row);
-      }
+    if (validRows.length === 0) {
+      return { imported: 0, skipped: 0, errors: [] };
     }
 
-    if (rowsToInsert.length === 0) {
-      return { imported: 0, skipped, errors: [] };
-    }
-
-    const result = await this.insumoRepo.bulkInsert(rowsToInsert);
+    const result = await this.insumoRepo.bulkInsert(validRows);
 
     return {
       imported: result.imported,
-      skipped: skipped + result.skipped,
+      skipped: result.skipped,
       errors: [],
     };
   }

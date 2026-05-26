@@ -10,8 +10,9 @@
     "db:migrate": "bun --env-file=../../.env drizzle-kit migrate",
     "db:push": "bun --env-file=../../.env drizzle-kit push",
     "db:studio": "bun --env-file=../../.env drizzle-kit studio",
-    "test": "bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/unit/ src/__test__/middleware/ src/__test__/health.test.ts src/__test__/integration/auth.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/users.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/insumos.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/apus.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/cotizaciones.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/sync.test.ts && bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/integration/proyectos.test.ts",
-    "db:seed": "bun --env-file=../../.env src/__test__/setup/seed.ts"
+    "test": "bun --env-file=../../.env src/__test__/setup/seed.ts && bun --env-file=../../.env test src/__test__/unit/ src/__test__/middleware/ src/__test__/health.test.ts src/__test__/integration/",
+    "db:seed": "bun --env-file=../../.env src/__test__/setup/seed.ts",
+    "db:reset": "bun --env-file=../../.env src/infra/adapters/driven/database/reset.ts && bun run db:migrate && bun run db:seed"
   },
   "dependencies": {
     "@proarq/core": "workspace:*",

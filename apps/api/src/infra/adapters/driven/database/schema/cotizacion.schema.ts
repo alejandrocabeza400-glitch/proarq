@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, integer, numeric, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { check, index, integer, numeric, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { proyectos } from './proyecto.schema';
 import { users } from './user.schema';
 
@@ -28,5 +28,7 @@ export const cotizaciones = pgTable(
       'estado_check',
       sql`${table.estado} IN ('BORRADOR','ENVIADA','APROBADA','REEMPLAZADA')`,
     ),
+    projectoIdx: index('cotizaciones_projecto_idx').on(table.projectoId),
+    createdByIdx: index('cotizaciones_created_by_idx').on(table.createdBy),
   }),
 );

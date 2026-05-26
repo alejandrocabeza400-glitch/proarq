@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, numeric, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { check, index, numeric, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { users } from './user.schema';
 
 export const insumosMaestro = pgTable(
@@ -16,5 +16,6 @@ export const insumosMaestro = pgTable(
   },
   (table) => ({
     unidadCheck: check('unidad_check', sql`${table.unidad} IN ('M3','KG','UND','GL')`),
+    nombreIdx: index('insumos_nombre_idx').on(table.nombre),
   }),
 );

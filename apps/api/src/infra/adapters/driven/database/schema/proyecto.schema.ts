@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { check, index, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { users } from './user.schema';
 
 export const proyectos = pgTable(
@@ -20,5 +20,6 @@ export const proyectos = pgTable(
       'estado_check',
       sql`${table.estado} IN ('PLANIFICACION','EN_EJECUCION','FINALIZADO','SUSPENDIDO')`,
     ),
+    createdByIdx: index('proyectos_created_by_idx').on(table.createdBy),
   }),
 );

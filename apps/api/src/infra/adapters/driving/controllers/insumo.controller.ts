@@ -4,9 +4,13 @@ import type {
 } from '@proarq/core/application/ports/in/insumo.input';
 import { insumoQuerySchema } from '@proarq/core/application/ports/in/insumo.input';
 import type { ManageInsumoUseCase } from '@proarq/core/application/use-cases/manage-insumo.use-case';
-import { parse } from 'csv-parse/sync';
+import { parse } from 'csv-parse';
 import type { NextFunction, Request, Response } from 'express';
+import { finished as finishedStream } from 'node:stream';
+import { promisify } from 'node:util';
 import { generatePdfReport } from '../../../services/pdf.service';
+
+const finished = promisify(finishedStream);
 
 export function createInsumoController(useCase: ManageInsumoUseCase) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -83,21 +87,28 @@ export function bulkUploadInsumoController(useCase: ManageInsumoUseCase) {
         return;
       }
 
-      const csvContent = req.file.buffer.toString('utf-8');
-      const records = parse(csvContent, {
+      const records: any[] = [];
+      const parser = parse(req.file.buffer, {
         columns: true,
         skip_empty_lines: true,
         trim: true,
       });
 
-      const rows = records.map((record: Record<string, string>) => ({
-        codigo: record.codigo,
-        nombre: record.nombre,
-        unidad: record.unidad,
-        costBase: record.cost_base,
-      }));
+      parser.on('readable', () => {
+        let record;
+        while ((record = parser.read()) !== null) {
+          records.push({
+            codigo: record.codigo,
+            nombre: record.nombre,
+            unidad: record.unidad,
+            costBase: record.cost_base,
+          });
+        }
+      });
 
-      const result = await useCase.bulkUpload(rows);
+      await finished(parser);
+
+      const result = await useCase.bulkUpload(records);
       res.status(201).json({ data: result });
     } catch (err) {
       next(err);

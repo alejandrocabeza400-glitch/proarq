@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 export const createApuSchema = z.object({
-  codigo: z.string().min(1, 'Code is required').max(20),
   nombre: z.string().min(1, 'Name is required').max(255),
   tipo: z.string().min(1, 'Type is required').max(50),
 });

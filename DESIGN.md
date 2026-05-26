@@ -665,3 +665,286 @@ HTTP 201 { data: { ... } }
 | Routes | `*.routes.ts` | `user.routes.ts` |
 | Middleware | `*.middleware.ts` | `auth.middleware.ts` |
 | Repositories | `*-<db>.repository.ts` | `postgres-user.repository.ts` |
+
+---
+
+## Mobile App (`apps/mobile`)
+
+The ProArq mobile app is a **React Native Expo web application** that consumes the ProArq REST API for on-site construction cost estimation. It targets the **web platform only**, sharing domain logic with the backend via `@proarq/core`.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        apps/mobile (Expo Web App)                        │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │  UI Layer (Screens + Components)                                 │   │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────┐  │   │
+│  │  │  Expo Router Pages    │  │  Reusable Components              │  │   │
+│  │  │  (src/app/)           │  │  (src/components/)                │  │   │
+│  │  │  - file-based routing │  │  - ui/ (Button, Card, Input...)   │  │   │
+│  │  │  - role-based gates   │  │  - domain/ (InsumoCard, ...)      │  │   │
+│  │  └──────────────────────┘  └──────────────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                  │                                       │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │  State Management Layer                                         │   │
+│  │  ┌──────────────────────┐  ┌──────────────────────────────────┐  │   │
+│  │  │  Zustand Stores       │  │  TanStack React Query            │  │   │
+│  │  │  (Global app state)   │  │  (Server state cache)            │  │   │
+│  │  │  - auth, sync         │  │  - GET cache + auto-refetch      │  │   │
+│  │  └──────────────────────┘  │  - Mutations with offline queue  │  │   │
+│  │                            └──────────────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                  │                                       │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │  Service Layer                                                  │   │
+│  │  ┌──────────────┐  ┌────────────────┐  ┌────────────────────┐   │   │
+│  │  │  API Client   │  │  Sync Engine    │  │  Storage Services  │   │   │
+│  │  │  (Axios +     │  │  (planned)      │  │  - Dexie/IndexedDB │   │   │
+│  │  │   interceptors)│  │                 │  │  - auth-storage    │   │   │
+│  │  │  - JWT attach  │  │                 │  │  (sessionStorage)  │   │   │
+│  │  │  - 401 refresh │  │                 │  │                    │   │   │
+│  │  └──────────────┘  └────────────────┘  └────────────────────┘   │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                  │                                       │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │  Shared Domain (packages/core)                                   │   │
+│  │  - Entity types: User, Insumo, Apu, Cotizacion, Proyecto, etc.  │   │   │
+│  │  - Zod schemas for validation (reused from backend)              │   │   │
+│  │  - Error types: AppError, ForbiddenError, etc.                   │   │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Navigation / Routing Structure
+
+```
+src/app/
+│
+├── _layout.tsx                  # Root layout: QueryClientProvider + ErrorBoundary
+│
+├── (auth)/                      # Unauthenticated route group
+│   ├── login.tsx                # S-01: Email + Password login
+│   ├── forgot-password.tsx      # S-02: Request reset code
+│   └── verify-code.tsx          # S-03: OTP + new password
+│
+├── (tabs)/                      # Bottom tab navigator (internal roles)
+│   ├── dashboard.tsx            # S-04: Project stats, recent quotes, FAB
+│   ├── insumos.tsx              # S-08: Insumos catalog (search, filter, list)
+│   ├── apus.tsx                 # S-09: APU list
+│   ├── cotizaciones.tsx         # S-13: Quote history (filterable)
+│   └── users.tsx                # S-05: User directory (ADMIN only)
+│
+├── users/                       # User management (ADMIN)
+│   └── create.tsx               # S-06: Create user form
+│
+├── apus/                        # APU detail & creation
+│   ├── create.tsx               # S-09: APU creator with items
+│   └── [id].tsx                 # S-09: APU detail/edit
+│
+├── cotizaciones/                # Quote screens
+│   └── [id]/
+│       ├── index.tsx            # S-14: Quote detail + actions
+│       └── pdf.tsx              # S-14: PDF viewer (iframe)
+│
+├── profile.tsx                  # S-07: Edit own profile
+├── access-denied.tsx            # S-18: 403 fallback
+├── insumos/                     # (reserved for create/edit)
+└── projects/                    # (reserved for project detail)
+```
+
+### State Management Approach
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                       State Management Layers                         │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  Zustand (Global App State)                                  │    │
+│  │  ┌─────────────────────┐  ┌──────────────────────────────┐   │    │
+│  │  │  auth.store.ts      │  │  reset-store.ts              │   │    │
+│  │  │  - user             │  │  - store reset registry      │   │    │
+│  │  │  - token            │  │  (used in tests for cleanup) │   │    │
+│  │  │  - refreshToken     │  │                              │   │    │
+│  │  │  - isAuthenticated  │  │                              │   │    │
+│  │  │  - login()          │  │                              │   │    │
+│  │  │  - logout()         │  │                              │   │    │
+│  │  │  - hasRole()        │  │                              │   │    │
+│  │  └─────────────────────┘  └──────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  TanStack React Query (Server State)                        │    │
+│  │  ┌──────────────────┐  ┌──────────────┐  ┌──────────────┐   │    │
+│  │  │  useInsumos()    │  │  useApus()   │  │  useCotizac. │   │    │
+│  │  │  useInsumos-     │  │              │  │  iones()     │   │    │
+│  │  │  WithCache()     │  │              │  │              │   │    │
+│  │  └──────────────────┘  └──────────────┘  └──────────────┘   │    │
+│  │  ┌──────────────────┐  ┌──────────────┐                     │    │
+│  │  │  useDashboard()  │  │  useUsers()  │                     │    │
+│  │  │  (multiple APIs)  │  │              │                     │    │
+│  │  └──────────────────┘  └──────────────┘                     │    │
+│  │                                                             │    │
+│  │  QueryClient defaults: staleTime=5min, gcTime=30min        │    │
+│  │  Write-through cache → Dexie.js IndexedDB                  │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  Dexie.js IndexedDB (Offline Cache)                         │    │
+│  │  Tables: insumos, apus, apuInsumos, cotizaciones,           │    │
+│  │          cotizacionItems, proyectos, users, syncQueue       │    │
+│  │  All entities have _lastSyncedAt timestamp for TTL checks   │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow (Online / Offline / Sync)
+
+**Online read path:**
+```
+User Action → Screen → Hook (useQuery) → API Service → Axios → Backend
+                                                    ↓
+                                              Dexie.js cache
+                                              (write-through update)
+```
+
+**Offline read path:**
+```
+User Action → Screen → Hook → placeholderData from Dexie.js
+                              → render cached data
+                              → show "Modo sin conexión" banner
+```
+
+**Online write path:**
+```
+User Action → Screen → Hook (useMutation) → API Service → Axios → Backend
+                                                                  ↓
+                                                            Dexie.js
+                                                            cache update
+```
+
+### Offline-First Strategy
+
+The mobile app uses a **write-through cache** pattern with IndexedDB via **Dexie.js**:
+
+| Aspect | Implementation |
+|---|---|
+| **Cache storage** | IndexedDB via Dexie.js (web-native, replaces SQLite) |
+| **Cache schema** | 8 tables mirroring backend entities plus a `syncQueue` table |
+| **Cache strategy** | Write-through on successful API reads, stale-while-revalidate via React Query |
+| **Offline reads** | React Query `placeholderData()` returns Dexie cache while network fetch is in-flight |
+| **Offline writes** | Queued in Dexie `syncQueue` table for later sync via `POST /sincronizar` |
+| **Sync engine** | Planned: reads pending queue → batches → `POST /sincronizar` → updates cache |
+| **Connectivity** | Planned: NetInfo-based detection with debounced sync trigger |
+| **Conflict resolution** | Server-side `ON CONFLICT (id) DO NOTHING` (first-write-wins) |
+
+Key design: all entities use **UUIDv4** primary keys generated client-side, enabling offline entity creation without key collisions.
+
+### How It Connects to the API
+
+**API Client Architecture (Axios):**
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                       API Client (axios)                              │
+│                                                                      │
+│  baseURL: http://localhost:8000/api/v1                               │
+│  timeout: 10s (reads), 15s (writes)                                 │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Request Interceptor                                          │   │
+│  │  Reads accessToken from sessionStorage                        │   │
+│  │  Attaches: Authorization: Bearer <token>                      │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                        │                                            │
+│                        ▼                                            │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  Response Interceptor                                         │   │
+│  │  On 401:                                                      │   │
+│  │    1. If already refreshing → queue request (promise dedup)   │   │
+│  │    2. If not → POST /auth/refresh with refreshToken           │   │
+│  │    3. On success → rotate tokens, retry all queued requests   │   │
+│  │    4. On failure → clear tokens, redirect to /login           │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Service modules** (one per domain):
+- `auth.api.ts` — login, forgotPassword, resetPassword, refresh
+- `insumos.api.ts` — list, getById, create, update, delete
+- `apus.api.ts` — list, getById, create, update, delete, addInsumo, removeInsumo
+- `cotizaciones.api.ts` — list, getById, create, update, branch
+- `users.api.ts` — list, getById, create, update, delete
+- `projects.api.ts` — list, getById
+
+All responses use the `{ data: ... }` envelope pattern from the backend.
+
+### Design System (Theme Tokens)
+
+The mobile app implements the **"Innova APU Manager"** design language via centralized theme tokens:
+
+| Token | File | Details |
+|---|---|---|
+| Colors | `theme/colors.ts` | Material 3 palette: Navy primary (#1A2B45), Orange tertiary (#F37021), surface tones |
+| Typography | `theme/typography.ts` | Inter font family, 10-level scale (displayLg → labelSm) |
+| Spacing | `theme/spacing.ts` | 4px-base spacing scale (xs=4, sm=8, md=16, lg=24, xl=32, xxl=48) |
+| Shadows | `theme/shadows.ts` | Ambient shadows using surface-tinted colors (never pure black) |
+
+UI primitives in `components/ui/` consume these tokens exclusively — no inline color literals.
+
+### Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Framework | Expo ~52 (React Native) | Cross-platform mobile framework |
+| Routing | Expo Router ~4 | File-based routing with route groups |
+| State | Zustand ^5 | Global app state (auth) |
+| Server State | TanStack React Query ^5 | API data fetching + caching |
+| HTTP Client | Axios ^1.7 | API communication with interceptors |
+| Offline DB | Dexie.js ^4 | IndexedDB wrapper for offline cache |
+| Validation | Zod 4.4.3 (shared with core) | Form validation |
+| Dates | date-fns ^4 | Date formatting |
+| Linting | Biome v2 (monorepo-wide) | Code quality + formatting |
+| Testing | @testing-library/react, jsdom | Component + hook tests |
+
+### Implementation Status
+
+| Feature | Status | Files |
+|---|---|---|
+| Foundation (theme, UI, API client) | ✅ Complete | `theme/`, `components/ui/`, `services/api/client.ts` |
+| Auth screens + service | ✅ Complete | `(auth)/login.tsx`, `forgot-password.tsx`, `verify-code.tsx`, `auth.service.ts` |
+| Auth store (Zustand) | ✅ Complete | `stores/auth.store.ts` |
+| Dashboard | ✅ Complete | `(tabs)/dashboard.tsx` |
+| Tab navigation | ✅ Complete | `(tabs)/` screens |
+| Insumos listing | ✅ Complete | `(tabs)/insumos.tsx`, `hooks/useInsumos.ts` |
+| Insumos Dexie cache | ✅ Complete | `hooks/useInsumosWithCache.ts` |
+| APU list + detail | ✅ Complete | `apus/create.tsx`, `apus/[id].tsx` |
+| Quote list + detail | ✅ Complete | `cotizaciones.tsx`, `cotizaciones/[id]/index.tsx` |
+| PDF viewer | ✅ Complete | `cotizaciones/[id]/pdf.tsx` |
+| Users management | 🟡 Partial | `users/create.tsx`, `(tabs)/users.tsx` exists |
+| Error boundary | ✅ Complete | `components/ErrorBoundary.tsx` |
+| Dexie database schema | ✅ Complete | `services/storage/database.ts` |
+| Test suite (19 files) | ✅ Complete | `__tests__/` |
+| Insumo create/edit screens | ❌ Not implemented | `insumos/create.tsx`, `insumos/[id].tsx` |
+| Sync engine | ❌ Not implemented | `services/sync/` |
+| Client Portal (S-15) | ❌ Not implemented | `(client)/` route group |
+| Version Compare (S-11) | ❌ Not implemented | `cotizaciones/[id]/compare.tsx` |
+| Link Client (S-12) | ❌ Not implemented | `link-client.tsx` |
+| Audit log viewer | ❌ Not implemented | — |
+| Project detail screen | ❌ Not implemented | `projects/[id].tsx` |
+
+### Key Architectural Decisions (Mobile)
+
+1. **IndexedDB over SQLite** — `expo-sqlite` is unavailable on web. Dexie.js provides a clean promise-based API over IndexedDB with indexing and transactions.
+
+2. **sessionStorage over expo-secure-store** — `expo-secure-store` is native-only. Web uses `sessionStorage` (cleared on tab close, appropriate for short-lived JWT sessions). Falls back to in-memory storage.
+
+3. **No separate `packages/mobile-core`** — All shared types and Zod schemas come directly from `packages/core` (`@proarq/core`), avoiding a third shared package.
+
+4. **Browser `<iframe>` for PDF** — Instead of `react-native-pdf` (native-only), uses `<iframe>` pointing to the backend PDF endpoint.
+
+5. **React Query + Dexie write-through** — Successful API responses are written to Dexie cache automatically. `placeholderData` reads from Dexie for instant offline display.
+
+6. **Promise-deduplicated 401 refresh** — Axios response interceptor queues concurrent requests during token refresh to avoid multiple simultaneous refresh calls.

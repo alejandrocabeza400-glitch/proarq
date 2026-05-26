@@ -10,6 +10,7 @@ import { postgresCotizacionRepo } from '../../driven/repositories/postgres-cotiz
 import {
   branchCotizacionController,
   createCotizacionController,
+  deleteCotizacionController,
   exportPdfCotizacionesController,
   getCotizacionController,
   listCotizacionesController,
@@ -43,6 +44,13 @@ router.patch(
   validateProfitMargin,
   validate(updateCotizacionSchema),
   updateCotizacionController(manageCotizacion),
+);
+
+router.delete(
+  '/:id',
+  decodeJWT,
+  checkRole(...operRoles),
+  deleteCotizacionController(manageCotizacion),
 );
 
 router.get(

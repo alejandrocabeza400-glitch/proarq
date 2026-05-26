@@ -3,7 +3,6 @@ import { z } from 'zod';
 const unidadEnum = z.enum(['M3', 'KG', 'UND', 'GL']);
 
 export const createInsumoSchema = z.object({
-  codigo: z.string().min(1, 'Code is required').max(20),
   nombre: z.string().min(1, 'Name is required').max(255),
   unidad: unidadEnum,
   costBase: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid cost base format'),

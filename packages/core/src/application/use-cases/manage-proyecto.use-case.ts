@@ -10,18 +10,20 @@ export class ManageProyectoUseCase {
   ) {}
 
   async create(data: {
-    codigo: string;
     nombre: string;
     descripcion?: string | null;
     estado: string;
     clienteId?: string | null;
     createdBy?: string | null;
   }): Promise<Proyecto> {
-    const existing = await this.proyectoRepo.findByCodigo(data.codigo);
-    if (existing) {
-      throw new AppError('Project with this code already exists', 409);
-    }
-    const proyecto = await this.proyectoRepo.create(data);
+    const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const codigo = `PRJ-${datePart}-${randomPart}`;
+
+    const proyecto = await this.proyectoRepo.create({
+      ...data,
+      codigo,
+    });
 
     if (this.auditRepo && data.createdBy) {
       await this.auditRepo.create({

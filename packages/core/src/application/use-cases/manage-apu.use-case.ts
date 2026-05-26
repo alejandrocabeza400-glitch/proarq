@@ -13,16 +13,18 @@ export class ManageApuUseCase {
   ) {}
 
   async create(data: {
-    codigo: string;
     nombre: string;
     tipo: string;
     createdBy: string;
   }): Promise<Apu> {
-    const existing = await this.apuRepo.findByCodigo(data.codigo);
-    if (existing) {
-      throw new AppError('APU with this code already exists', 409);
-    }
-    const apu = await this.apuRepo.create(data);
+    const datePart = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const codigo = `APU-${datePart}-${randomPart}`;
+
+    const apu = await this.apuRepo.create({
+      ...data,
+      codigo,
+    });
 
     if (this.auditRepo && data.createdBy) {
       await this.auditRepo.create({

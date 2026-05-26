@@ -3,7 +3,6 @@ import { z } from 'zod';
 const estadoProyectoEnum = z.enum(['PLANIFICACION', 'EN_EJECUCION', 'FINALIZADO', 'SUSPENDIDO']);
 
 export const createProyectoSchema = z.object({
-  codigo: z.string().min(1, 'Codigo is required'),
   nombre: z.string().min(1, 'Nombre is required'),
   descripcion: z.string().optional().nullable(),
   estado: estadoProyectoEnum.default('PLANIFICACION'),
