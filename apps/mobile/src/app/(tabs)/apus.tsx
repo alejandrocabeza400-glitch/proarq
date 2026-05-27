@@ -1,15 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import ApuCard from '../../components/ApuCard';
 import PageLayout from '../../components/PageLayout';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
+import Input from '../../components/ui/Input';
 import LoadingState from '../../components/ui/LoadingState';
 import { useApus } from '../../hooks/useApus';
 import { apusApi } from '../../services/api/apus.api';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { ExportIcon } from '../../components/ui/Icons';
 
 export default function ApusScreen() {
   const router = useRouter();
@@ -17,6 +21,7 @@ export default function ApusScreen() {
   const user = useAuthStore((s) => s.user);
   const canManage =
     user?.role === 'ADMIN' || user?.role === 'GERENTE_OBRA' || user?.role === 'DIRECTOR_OBRA';
+  const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { data: apus = [], isPending, isError, refetch } = useApus();
@@ -31,50 +36,67 @@ export default function ApusScreen() {
     },
   });
 
+  const handleExportPdf = async () => {
+    try {
+      // Logic for exporting all APUs PDF
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleEdit = (id: string) => {
     router.push(`/apus/${id}`);
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
-
   if (isPending) {
-    return <LoadingState message="Cargando..." />;
+    return <LoadingState message="Cargando APUs..." variant="spinner" fullPage />;
   }
 
   if (isError) {
     return (
-      <EmptyState
-        title="Error al cargar APUs"
-        description="No se pudieron cargar los APUs. Intenta de nuevo."
-        actionLabel="Reintentar"
-        onAction={() => refetch()}
-      />
+      <PageLayout title="Análisis de Precios Unitarios">
+        <EmptyState
+          title="Error al cargar APUs"
+          description="No se pudieron cargar los APUs. Intenta de nuevo."
+          actionLabel="Reintentar"
+          onAction={() => refetch()}
+        />
+      </PageLayout>
     );
   }
 
+  const filteredApus = apus.filter(
+    (a) =>
+      a.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+      a.codigo?.toLowerCase().includes(search.toLowerCase()) ||
+      a.tipo?.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <PageLayout
-      title="Análisis de Precios Unitarios"
-      fabAction={canManage ? () => router.push('/apus/create') : undefined}
-      fabLabel="Nuevo APU"
-      fabVisible={canManage}
+      title="Análisis APU"
+      headerAction={{
+        icon: <ExportIcon size={22} color={colors.primary} />,
+        onPress: handleExportPdf,
+        label: 'Exportar PDF'
+      }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-        {apus.length === 0 ? (
-          <p
-            style={{
-              color: colors.onSurfaceVariant,
-              fontSize: '14px',
-              textAlign: 'center',
-              padding: spacing.lg,
-            }}
-          >
-            No hay APUs
-          </p>
-        ) : (
-          apus.map((apu) => (
+      <Input
+        label="Buscar Análisis"
+        placeholder="Ej: Muro, PINT-001..."
+        value={search}
+        onChangeText={setSearch}
+        style={styles.searchBar}
+      />
+
+      {filteredApus.length === 0 ? (
+        <EmptyState
+          title="Sin resultados"
+          description="No se encontraron análisis que coincidan con la búsqueda."
+        />
+      ) : (
+        <View style={styles.listContainer}>
+          {filteredApus.map((apu) => (
             <ApuCard
               key={apu.id}
               apu={apu}
@@ -83,84 +105,30 @@ export default function ApusScreen() {
               onDelete={canManage ? () => setConfirmDelete(apu.id) : undefined}
               isDeleting={deleteMutation.isPending && confirmDelete === apu.id}
             />
-          ))
-        )}
-      </div>
-
-      {confirmDelete && (
-        <div
-          data-testid="confirm-dialog"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: colors.surface,
-              padding: spacing.lg,
-              borderRadius: '12px',
-              maxWidth: '300px',
-              textAlign: 'center',
-            }}
-          >
-            <p
-              style={{
-                fontFamily: 'Inter',
-                fontSize: '16px',
-                color: colors.onSurface,
-                margin: '0 0 16px',
-              }}
-            >
-              ¿Confirmar eliminación?
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={() => setConfirmDelete(null)}
-                disabled={deleteMutation.isPending}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: colors.surfaceContainerHigh,
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDelete(confirmDelete)}
-                disabled={deleteMutation.isPending}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: colors.error,
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                }}
-                aria-label="Confirmar"
-              >
-                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-              </button>
-            </div>
-          </div>
-        </div>
+          ))}
+        </View>
       )}
 
-      <div data-testid="refresh-control" onClick={() => refetch()} style={{ display: 'none' }} />
+      <ConfirmDialog
+        visible={confirmDelete !== null}
+        title="¿Confirmar eliminación?"
+        description="Esta acción no se puede deshacer y eliminará permanentemente este APU del sistema."
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete)}
+        onCancel={() => setConfirmDelete(null)}
+        isConfirming={deleteMutation.isPending}
+      />
+
+      <View data-testid="refresh-control" onClick={() => refetch()} style={{ display: 'none' }} />
     </PageLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  searchBar: {
+    marginBottom: spacing.lg,
+  },
+  listContainer: {
+    gap: 12,
+    paddingBottom: 100, // Space for tab bar
+  },
+});

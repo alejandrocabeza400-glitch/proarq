@@ -1,22 +1,22 @@
 import type React from 'react';
+import { useState } from 'react';
+import { StyleSheet, TextInput, View, type ViewStyle, type TextStyle } from 'react-native';
 import { colors } from '../../theme/colors';
+import Text from './Text';
 
 interface InputProps {
   placeholder?: string;
   label?: string;
   value?: string;
   onChangeText?: (text: string) => void;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'tel';
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   maxLength?: number;
   'aria-label'?: string;
   editable?: boolean;
   disabled?: boolean;
-  type?: string;
-  style?: React.CSSProperties;
-  name?: string;
+  style?: ViewStyle;
 }
 
 export default function Input({
@@ -24,113 +24,107 @@ export default function Input({
   label,
   value,
   onChangeText,
-  onChange,
   error,
   secureTextEntry,
-  keyboardType,
+  keyboardType = 'default',
   maxLength,
   editable = true,
   disabled,
-  type: typeProp,
   style,
-  name,
   ...rest
 }: InputProps) {
-  const getInputType = () => {
-    if (typeProp) return typeProp;
-    if (secureTextEntry) return 'password';
-    if (keyboardType === 'email-address') return 'email';
-    return 'text';
-  };
+  const [isFocused, setIsFocused] = useState(false);
 
-  const inputType = getInputType();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onChange) {
-      onChange(e);
-    }
-    if (onChangeText) {
-      onChangeText(e.target.value);
-    }
-  };
-
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    marginBottom: '16px',
-    ...style,
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontFamily: 'Inter',
-    fontSize: '14px',
-    fontWeight: 500,
-    color: colors.onSurface,
-    lineHeight: '1.4',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    fontFamily: 'Inter',
-    fontSize: '16px',
-    fontWeight: 400,
-    lineHeight: '1.5',
-    padding: '12px 16px',
-    border: error ? `1px solid ${colors.error}` : `1px solid ${colors.outlineVariant}15`,
-    borderRadius: '6px',
-    backgroundColor: editable ? colors.surface : colors.surfaceContainerLow,
-    color: colors.onSurface,
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
-    opacity: !editable ? 0.6 : 1,
-  };
-
-  const focusStyle = `
-    .input-field:focus {
-      border-color: ${colors.primaryContainer} !important;
-      border-bottom-width: 2px !important;
-    }
-  `;
-
-  const errorTextStyle: React.CSSProperties = {
-    fontFamily: 'Inter',
-    fontSize: '12px',
-    color: colors.error,
-    fontWeight: 500,
-    lineHeight: '1.4',
-  };
+  const isEditable = editable && !disabled;
 
   return (
-    <div style={containerStyle}>
-      <style>{focusStyle}</style>
-      {label && <label style={labelStyle}>{label}</label>}
-      <input
-        type={inputType}
+    <View style={[styles.container, style]}>
+      {label && (
+        <Text variant="labelMd" style={styles.label}>
+          {label}
+        </Text>
+      )}
+      <TextInput
         placeholder={placeholder}
+        placeholderTextColor={colors.outline}
         value={value}
-        onChange={handleChange}
+        onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
         maxLength={maxLength}
-        disabled={disabled !== undefined ? disabled : !editable}
-        className={`input-field${error ? ' error' : ''}`}
+        editable={isEditable}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        style={[
+          styles.input,
+          error ? styles.inputError : null,
+          isFocused ? styles.inputFocused : null,
+          !isEditable ? styles.inputDisabled : null,
+        ]}
         aria-label={rest['aria-label']}
-        style={inputStyle}
-        name={name}
       />
-      {error && <span style={errorTextStyle}>{error}</span>}
+      {error && (
+        <Text variant="labelSm" color={colors.error} style={styles.errorText}>
+          {error}
+        </Text>
+      )}
       {maxLength && (
-        <span
-          style={{
-            fontFamily: 'Inter',
-            fontSize: '12px',
-            color: colors.onSurfaceVariant,
-            textAlign: 'right',
-          }}
+        <Text
+          variant="labelSm"
+          align="right"
+          color={colors.onSurfaceVariant}
+          style={styles.maxLengthText}
         >
           {value?.length || 0}/{maxLength}
-        </span>
+        </Text>
       )}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 6,
+    marginBottom: 16,
+    width: '100%',
+  },
+  label: {
+    color: colors.onSurface,
+    marginBottom: 6,
+  },
+  input: {
+    fontFamily: 'Inter',
+    fontSize: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    color: colors.onSurface,
+    width: '100%',
+  },
+  inputFocused: {
+    borderColor: colors.surfaceTint,
+    // Note: RN shadows for focus are limited, on Web we can use shadowColor/Opacity
+    shadowColor: colors.surfaceTint,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 1.5,
+  },
+  inputDisabled: {
+    backgroundColor: colors.surfaceContainerLow,
+    opacity: 0.75,
+  },
+  errorText: {
+    marginTop: 2,
+  },
+  maxLengthText: {
+    marginTop: 2,
+  },
+});

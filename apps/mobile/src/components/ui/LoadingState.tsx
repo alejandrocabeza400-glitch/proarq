@@ -1,5 +1,7 @@
 import type React from 'react';
+import { ActivityIndicator, StyleSheet, View, type ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
+import Text from './Text';
 
 interface LoadingStateProps {
   message?: string;
@@ -12,77 +14,55 @@ export default function LoadingState({
   variant = 'skeleton',
   fullPage = false,
 }: LoadingStateProps) {
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    gap: '16px',
-    width: '100%',
-    ...(fullPage
-      ? {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: colors.surface,
-          zIndex: 9999,
-        }
-      : {}),
-  };
-
-  const spinnerStyle: React.CSSProperties = {
-    width: '40px',
-    height: '40px',
-    border: `3px solid ${colors.outlineVariant}`,
-    borderTopColor: colors.primaryContainer,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  };
-
-  const skeletonStyle: React.CSSProperties = {
-    width: '100%',
-    height: '80px',
-    backgroundColor: colors.surfaceContainerHigh,
-    borderRadius: '8px',
-    animation: 'pulse 1.5s ease-in-out infinite',
-  };
-
   if (variant === 'spinner') {
     return (
-      <div
-        data-testid="loading-container"
-        className={fullPage ? 'fullpage' : ''}
-        style={containerStyle}
-      >
-        <div data-testid="loading-indicator" role="status" aria-label="loading">
-          <div data-testid="spinner" style={spinnerStyle} />
-        </div>
+      <View style={[styles.container, fullPage && styles.fullPage]}>
+        <ActivityIndicator size="large" color={colors.primary} />
         {message && (
-          <p style={{ fontFamily: 'Inter', color: colors.onSurfaceVariant, fontSize: '14px' }}>
+          <Text variant="bodySm" color={colors.onSurfaceVariant} style={styles.message}>
             {message}
-          </p>
+          </Text>
         )}
-      </div>
+      </View>
     );
   }
 
+  // Basic skeleton implementation using a pulsed View
   return (
-    <div
-      data-testid="loading-container"
-      className={fullPage ? 'fullpage' : ''}
-      style={containerStyle}
-    >
-      <div data-testid="loading-indicator" role="status" aria-label="loading">
-        <div data-testid="skeleton-placeholder" style={skeletonStyle} />
-      </div>
+    <View style={[styles.container, fullPage && styles.fullPage]}>
+      <View style={styles.skeleton} />
       {message && (
-        <p style={{ fontFamily: 'Inter', color: colors.onSurfaceVariant, fontSize: '14px' }}>
+        <Text variant="bodySm" color={colors.onSurfaceVariant} style={styles.message}>
           {message}
-        </p>
+        </Text>
       )}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    width: '100%',
+  },
+  fullPage: {
+    flex: 1,
+    minHeight: '100%',
+    backgroundColor: colors.surface,
+  },
+  skeleton: {
+    width: '100%',
+    height: 80,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: 8,
+    // Note: React Native doesn't support CSS keyframes for pulse directly, 
+    // would need Animated API for true pulse effect. Keeping it simple for now.
+    opacity: 0.6,
+  },
+  message: {
+    marginTop: 8,
+  },
+});

@@ -293,4 +293,4 @@ apps/mobile/
 ---
 
 # Rules
-**Lenguage:** Always write in English, even if the original question is in Spanish. This ensures consistency and accessibility for all agents.
+**Lenguage:** Always response in spanish

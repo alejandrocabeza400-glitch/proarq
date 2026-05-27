@@ -1,6 +1,8 @@
 import React from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { DeleteIcon, EditIcon } from './Icons';
 
 interface CardActionsProps {
   onEdit?: () => void;
@@ -10,57 +12,84 @@ interface CardActionsProps {
 
 export default function CardActions({ onEdit, onDelete, isDeleting }: CardActionsProps) {
   return (
-    <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center', marginLeft: spacing.sm }}>
+    <View style={styles.container}>
       {onEdit && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
+        <Pressable
+          onPress={(e) => {
+            // This is critical for Web compatibility when nested in other Pressables
+            if (typeof e?.stopPropagation === 'function') e.stopPropagation();
             onEdit();
           }}
-          style={{
-            backgroundColor: colors.primaryContainer,
-            border: 'none',
-            cursor: 'pointer',
-            padding: '6px 10px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'opacity 0.2s',
-          }}
-          aria-label="Editar"
-          title="Editar"
+          style={({ pressed, hovered }) => [
+            styles.button,
+            styles.editButton,
+            (pressed || hovered) && styles.editActive,
+            { transform: [{ scale: pressed ? 0.95 : hovered ? 1.05 : 1 }] }
+          ]}
+          accessibilityLabel="Editar"
         >
-          <span style={{ fontSize: '14px' }}>✏️</span>
-        </button>
+          <EditIcon size={18} color={colors.primary} />
+        </Pressable>
       )}
       {onDelete && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
+        <Pressable
+          onPress={(e) => {
+            if (typeof e?.stopPropagation === 'function') e.stopPropagation();
             onDelete();
           }}
           disabled={isDeleting}
-          style={{
-            backgroundColor: colors.error,
-            border: 'none',
-            cursor: isDeleting ? 'not-allowed' : 'pointer',
-            padding: '6px 10px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'opacity 0.2s',
-            opacity: isDeleting ? 0.5 : 1,
-          }}
-          aria-label="Eliminar"
-          title="Eliminar"
+          style={({ pressed, hovered }) => [
+            styles.button,
+            styles.deleteButton,
+            (pressed || hovered) && styles.deleteActive,
+            { 
+              transform: [{ scale: pressed ? 0.95 : hovered ? 1.05 : 1 }],
+              opacity: isDeleting ? 0.5 : 1
+            }
+          ]}
+          accessibilityLabel="Eliminar"
         >
-          <span style={{ fontSize: '14px', color: '#ffffff' }}>
-            {isDeleting ? '⏳' : '🗑️'}
-          </span>
-        </button>
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={colors.error} />
+          ) : (
+            <DeleteIcon size={18} color={colors.error} />
+          )}
+        </Pressable>
       )}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    marginLeft: spacing.md,
+  },
+  button: {
+    padding: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    minWidth: 40,
+    minHeight: 40,
+  },
+  editButton: {
+    backgroundColor: '#ffffff',
+    borderColor: 'rgba(15, 23, 42, 0.1)',
+  },
+  editActive: {
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
+    borderColor: 'rgba(15, 23, 42, 0.3)',
+  },
+  deleteButton: {
+    backgroundColor: '#ffffff',
+    borderColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  deleteActive: {
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+});

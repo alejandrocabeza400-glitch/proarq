@@ -1,5 +1,7 @@
 import type React from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
+import Text from './Text';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
@@ -10,9 +12,8 @@ interface ButtonProps {
   loading?: boolean;
   variant?: ButtonVariant;
   fullWidth?: boolean;
-  className?: string;
-  type?: 'button' | 'submit';
-  style?: React.CSSProperties;
+  style?: ViewStyle;
+  textVariant?: 'labelMd' | 'labelSm' | 'titleSm';
 }
 
 export default function Button({
@@ -22,74 +23,97 @@ export default function Button({
   loading = false,
   variant = 'primary',
   fullWidth = false,
-  className = '',
-  type = 'button',
   style,
+  textVariant = 'labelMd',
 }: ButtonProps) {
-  const baseStyle: React.CSSProperties = {
-    minHeight: '44px',
-    padding: '12px 24px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: disabled || loading ? 'not-allowed' : 'pointer',
-    fontFamily: 'Inter',
-    fontSize: '16px',
-    fontWeight: 600,
-    lineHeight: '1.4',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    transition: 'opacity 0.2s',
-    opacity: disabled ? 0.5 : 1,
-    width: fullWidth ? '100%' : undefined,
-    ...style,
+  const getVariantStyles = (pressed: boolean, hovered: boolean) => {
+    switch (variant) {
+      case 'primary':
+        return {
+          backgroundColor: pressed
+            ? colors.primaryContainer
+            : hovered
+              ? colors.primaryContainer
+              : colors.primary,
+          color: colors.onPrimary,
+          shadowColor: colors.primary,
+        };
+      case 'secondary':
+        return {
+          backgroundColor: pressed 
+            ? colors.secondary 
+            : hovered 
+              ? colors.secondary 
+              : colors.secondaryContainer,
+          color: pressed || hovered ? colors.onSecondary : colors.onSecondaryContainer,
+          shadowColor: colors.secondary,
+        };
+      case 'ghost':
+        return {
+          backgroundColor: pressed
+            ? 'rgba(15, 23, 42, 0.08)'
+            : hovered
+              ? 'rgba(15, 23, 42, 0.04)'
+              : 'transparent',
+          color: colors.primary,
+          shadowColor: 'transparent',
+        };
+    }
   };
-
-  const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
-    primary: {
-      backgroundColor: colors.tertiaryContainer,
-      color: '#ffffff',
-    },
-    secondary: {
-      backgroundColor: colors.primaryContainer,
-      color: '#ffffff',
-    },
-    ghost: {
-      backgroundColor: 'transparent',
-      color: colors.primary,
-    },
-  };
-
-  const classes = [variant, fullWidth ? 'full' : '', disabled ? 'disabled' : '', className]
-    .filter(Boolean)
-    .join(' ');
 
   return (
-    <button
-      type={type}
-      onClick={disabled || loading ? undefined : onPress}
+    <Pressable
+      onPress={onPress}
       disabled={disabled || loading}
-      className={classes}
-      style={{ ...baseStyle, ...variantStyles[variant] }}
+      style={({ pressed, hovered }) => [
+        styles.base,
+        fullWidth && styles.fullWidth,
+        {
+          backgroundColor: getVariantStyles(pressed, hovered).backgroundColor,
+          opacity: disabled ? 0.5 : 1,
+          transform: [{ translateY: pressed ? 1 : hovered ? -1 : 0 }, { scale: pressed ? 0.98 : 1 }],
+          shadowOpacity: variant !== 'ghost' && !disabled ? (pressed ? 0.1 : hovered ? 0.25 : 0.15) : 0,
+          shadowRadius: pressed ? 2 : hovered ? 12 : 6,
+          shadowColor: getVariantStyles(pressed, hovered).shadowColor,
+        },
+        style,
+      ]}
     >
       {loading ? (
-        <span data-testid="loading-spinner" role="status" aria-label="loading">
-          <span
-            style={{
-              display: 'inline-block',
-              width: '16px',
-              height: '16px',
-              border: '2px solid rgba(255,255,255,0.3)',
-              borderTopColor: '#ffffff',
-              borderRadius: '50%',
-              animation: 'spin 0.6s linear infinite',
-            }}
-          />
-        </span>
+        <ActivityIndicator color={variant === 'ghost' ? colors.primary : '#ffffff'} size="small" />
+      ) : typeof children === 'string' ? (
+        <Text
+          variant={textVariant}
+          weight="700"
+          color={getVariantStyles(false, false).color}
+          style={styles.text}
+        >
+          {children}
+        </Text>
       ) : (
         children
       )}
-    </button>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    minHeight: 48,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  text: {
+    textAlign: 'center',
+  },
+});

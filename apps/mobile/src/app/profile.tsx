@@ -35,12 +35,22 @@ export default function ProfileScreen() {
           padding: spacing.md,
           backgroundColor: colors.surface,
           minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <p style={{ color: colors.onSurfaceVariant, textAlign: 'center', marginTop: '40%' }}>
+        <p
+          style={{ color: colors.onSurfaceVariant, textAlign: 'center', marginBottom: spacing.md }}
+        >
           Sesión no encontrada
         </p>
-        <Button onPress={() => router.replace('/(auth)/login')} fullWidth>
+        <Button
+          onPress={() => router.replace('/(auth)/login')}
+          fullWidth
+          style={{ maxWidth: '300px' }}
+        >
           Iniciar Sesión
         </Button>
       </div>
@@ -55,38 +65,52 @@ export default function ProfileScreen() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: spacing.xl,
+          padding: '24px 0 32px',
         }}
       >
         <div
           style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
+            width: '96px',
+            height: '96px',
+            borderRadius: '48px',
             backgroundColor: colors.primaryContainer,
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '32px',
-            fontWeight: 700,
+            fontSize: '36px',
+            fontWeight: 800,
             marginBottom: spacing.md,
+            boxShadow: '0 8px 16px rgba(4, 22, 47, 0.15)',
+            border: `3px solid ${colors.outlineVariant}30`,
           }}
         >
-          {user.name?.[0] || 'U'}
+          {user.name?.[0]?.toUpperCase() || 'U'}
         </div>
-        <h2 style={{ color: colors.onSurface, fontSize: '20px', fontWeight: 700, margin: 0 }}>
+
+        <h2
+          style={{
+            color: colors.primary,
+            fontSize: '22px',
+            fontWeight: 800,
+            margin: 0,
+            letterSpacing: '-0.02em',
+          }}
+        >
           {user.name}
         </h2>
+
         <span
           style={{
-            padding: '4px 12px',
-            borderRadius: '12px',
-            backgroundColor: colors.tertiaryContainer,
-            color: '#ffffff',
+            padding: '4px 14px',
+            borderRadius: '20px',
+            backgroundColor: `${colors.tertiaryContainer}15`,
+            color: colors.onTertiaryContainer,
             fontSize: '12px',
-            fontWeight: 600,
+            fontWeight: 700,
             marginTop: spacing.sm,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
           }}
         >
           {user.role}
@@ -94,12 +118,20 @@ export default function ProfileScreen() {
       </div>
 
       {/* Info section */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: spacing.md,
+          maxWidth: '480px',
+          margin: '0 auto',
+        }}
+      >
         {isEditing ? (
           <>
-            <Input label="Nombre" value={name} onChangeText={setName} />
+            <Input label="Nombre completo" value={name} onChangeText={setName} />
             <Input label="Correo electrónico" value={email} editable={false} />
-            <div style={{ display: 'flex', gap: spacing.sm }}>
+            <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.sm }}>
               <Button onPress={handleSave} fullWidth>
                 Guardar
               </Button>
@@ -112,64 +144,76 @@ export default function ProfileScreen() {
           <>
             <div
               style={{
-                padding: spacing.md,
-                backgroundColor: colors.surfaceContainerLow,
-                borderRadius: '8px',
+                padding: '16px 20px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '1px solid rgba(4, 22, 47, 0.06)',
+                boxShadow: '0 2px 4px rgba(4, 22, 47, 0.01)',
               }}
             >
               <p
                 style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   color: colors.onSurfaceVariant,
                   margin: 0,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.08em',
+                  fontWeight: 700,
                 }}
               >
                 Correo electrónico
               </p>
               <p
                 style={{
-                  fontSize: '16px',
-                  color: colors.onSurface,
-                  margin: '4px 0 0',
-                  fontWeight: 500,
+                  fontSize: '15px',
+                  color: colors.primary,
+                  margin: '6px 0 0',
+                  fontWeight: 600,
                 }}
               >
                 {user.email}
               </p>
             </div>
+
             <div
               style={{
-                padding: spacing.md,
-                backgroundColor: colors.surfaceContainerLow,
-                borderRadius: '8px',
+                padding: '16px 20px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '1px solid rgba(4, 22, 47, 0.06)',
+                boxShadow: '0 2px 4px rgba(4, 22, 47, 0.01)',
               }}
             >
               <p
                 style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   color: colors.onSurfaceVariant,
                   margin: 0,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.08em',
+                  fontWeight: 700,
                 }}
               >
-                Rol
+                Rol asignado
               </p>
               <p
                 style={{
-                  fontSize: '16px',
-                  color: colors.onSurface,
-                  margin: '4px 0 0',
-                  fontWeight: 500,
+                  fontSize: '15px',
+                  color: colors.primary,
+                  margin: '6px 0 0',
+                  fontWeight: 600,
                 }}
               >
                 {user.role}
               </p>
             </div>
 
-            <Button onPress={() => setIsEditing(true)} variant="secondary" fullWidth>
+            <Button
+              onPress={() => setIsEditing(true)}
+              variant="secondary"
+              fullWidth
+              style={{ marginTop: '8px' }}
+            >
               Editar Perfil
             </Button>
           </>
@@ -177,12 +221,28 @@ export default function ProfileScreen() {
 
         <div
           style={{
-            borderTop: `1px solid ${colors.outlineVariant}20`,
+            borderTop: `1px solid ${colors.outlineVariant}25`,
             paddingTop: spacing.lg,
-            marginTop: spacing.md,
+            marginTop: spacing.lg,
           }}
         >
-          <Button onPress={handleLogout} variant="ghost" fullWidth style={{ color: colors.error }}>
+          <Button
+            onPress={handleLogout}
+            variant="ghost"
+            fullWidth
+            style={{
+              color: colors.error,
+              border: `1px solid ${colors.error}25`,
+              backgroundColor: 'transparent',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `${colors.error}08`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
             Cerrar Sesión
           </Button>
         </div>

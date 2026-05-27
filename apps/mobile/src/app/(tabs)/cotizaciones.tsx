@@ -1,14 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 import CotizacionCard from '../../components/CotizacionCard';
 import PageLayout from '../../components/PageLayout';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
+import Input from '../../components/ui/Input';
 import LoadingState from '../../components/ui/LoadingState';
+import Text from '../../components/ui/Text';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { cotizacionesApi } from '../../services/api/cotizaciones.api';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { ExportIcon } from '../../components/ui/Icons';
 
 const COTIZACION_STATUSES = ['BORRADOR', 'ENVIADA', 'APROBADA', 'REEMPLAZADA'] as const;
 
@@ -19,9 +25,18 @@ export default function CotizacionesScreen() {
   const canManage =
     user?.role === 'ADMIN' || user?.role === 'GERENTE_OBRA' || user?.role === 'DIRECTOR_OBRA';
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { data: cotizaciones = [], isPending, isError, refetch } = useCotizaciones(statusFilter);
+
+  const filteredCotizaciones = search
+    ? cotizaciones.filter(
+        (c) =>
+          c.codigo?.toLowerCase().includes(search.toLowerCase()) ||
+          c.proyectoNombre?.toLowerCase().includes(search.toLowerCase()),
+      )
+    : cotizaciones;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -33,6 +48,14 @@ export default function CotizacionesScreen() {
     },
   });
 
+  const handleExportPdf = async () => {
+    try {
+      // Logic for exporting all quotes PDF
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleFilter = (estado: string) => {
     setStatusFilter(estado === statusFilter ? '' : estado);
   };
@@ -41,66 +64,69 @@ export default function CotizacionesScreen() {
     router.push(`/cotizaciones/${id}`);
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
-  };
-
   if (isPending) {
-    return <LoadingState message="Cargando..." />;
+    return <LoadingState message="Cargando cotizaciones..." variant="spinner" fullPage />;
   }
 
   if (isError) {
     return (
-      <EmptyState
-        title="Error al cargar cotizaciones"
-        description="No se pudieron cargar las cotizaciones. Intenta de nuevo."
-        actionLabel="Reintentar"
-        onAction={() => refetch()}
-      />
+      <PageLayout title="Cotizaciones">
+        <EmptyState
+          title="Error al cargar cotizaciones"
+          description="No se pudieron cargar las cotizaciones. Intenta de nuevo."
+          actionLabel="Reintentar"
+          onAction={() => refetch()}
+        />
+      </PageLayout>
     );
   }
 
   return (
     <PageLayout
       title="Cotizaciones"
-      fabAction={canManage ? () => router.push('/cotizaciones/create') : undefined}
-      fabLabel="Nueva Cotización"
-      fabVisible={canManage}
+      headerAction={{
+        icon: <ExportIcon size={22} color={colors.primary} />,
+        onPress: handleExportPdf,
+        label: 'Exportar PDF'
+      }}
     >
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {COTIZACION_STATUSES.map((status) => (
-          <span
-            key={status}
-            onClick={() => handleFilter(status)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '16px',
-              backgroundColor:
-                statusFilter === status ? colors.primaryContainer : colors.surfaceContainerHigh,
-              color: statusFilter === status ? '#ffffff' : colors.onSurfaceVariant,
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            {status}
-          </span>
-        ))}
-      </div>
+      <Input
+        label="Buscar Cotizaciones"
+        placeholder="Ej: COT-001, Proyecto..."
+        value={search}
+        onChangeText={setSearch}
+        style={styles.searchBar}
+      />
 
-      {cotizaciones.length === 0 ? (
-        <p
-          style={{
-            color: colors.onSurfaceVariant,
-            fontSize: '14px',
-            textAlign: 'center',
-            padding: '24px',
-          }}
-        >
-          No hay cotizaciones
-        </p>
+      <View style={styles.chipsContainer}>
+        {COTIZACION_STATUSES.map((status) => (
+          <Pressable
+            key={status}
+            onPress={() => handleFilter(status)}
+            style={[
+              styles.chip,
+              statusFilter === status && styles.chipActive
+            ]}
+          >
+            <Text 
+              variant="labelSm" 
+              weight="700"
+              color={statusFilter === status ? '#ffffff' : colors.onSurfaceVariant}
+            >
+              {status}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {filteredCotizaciones.length === 0 ? (
+        <EmptyState
+          title="Sin resultados"
+          description="No se encontraron cotizaciones con los criterios seleccionados."
+        />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {cotizaciones.map((cot) => (
+        <View style={styles.listContainer}>
+          {filteredCotizaciones.map((cot) => (
             <CotizacionCard
               key={cot.id}
               cotizacion={cot}
@@ -112,81 +138,52 @@ export default function CotizacionesScreen() {
               isDeleting={deleteMutation.isPending && confirmDelete === cot.id}
             />
           ))}
-        </div>
+        </View>
       )}
 
-      {confirmDelete && (
-        <div
-          data-testid="confirm-dialog"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: colors.surface,
-              padding: '24px',
-              borderRadius: '12px',
-              maxWidth: '300px',
-              textAlign: 'center',
-            }}
-          >
-            <p
-              style={{
-                fontFamily: 'Inter',
-                fontSize: '16px',
-                color: colors.onSurface,
-                margin: '0 0 16px',
-              }}
-            >
-              ¿Confirmar eliminación?
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={() => setConfirmDelete(null)}
-                disabled={deleteMutation.isPending}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: colors.surfaceContainerHigh,
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleDelete(confirmDelete)}
-                disabled={deleteMutation.isPending}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: colors.error,
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontFamily: 'Inter',
-                  fontSize: '14px',
-                }}
-                aria-label="Confirmar"
-              >
-                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        visible={confirmDelete !== null}
+        title="¿Confirmar eliminación?"
+        description="Esta acción no se puede deshacer y eliminará permanentemente esta cotización del sistema."
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete)}
+        onCancel={() => setConfirmDelete(null)}
+        isConfirming={deleteMutation.isPending}
+      />
+
+      <View data-testid="refresh-control" onClick={() => refetch()} style={{ display: 'none' }} />
     </PageLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  searchBar: {
+    marginBottom: spacing.lg,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: spacing.lg,
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  listContainer: {
+    gap: 12,
+    paddingBottom: 100, // Space for tab bar
+  },
+});

@@ -1,221 +1,244 @@
 import { useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import PageLayout from '../../components/PageLayout';
-import EmptyState from '../../components/ui/EmptyState';
 import LoadingState from '../../components/ui/LoadingState';
+import Text from '../../components/ui/Text';
+import {
+  CotizacionesIcon,
+  ProyectosIcon,
+  InsumosIcon,
+  UsersIcon,
+  ApusIcon,
+} from '../../components/ui/Icons';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAuthStore } from '../../stores/auth.store';
-import { slideUp } from '../../styles/animations';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: '120px',
-        padding: spacing.md,
-        backgroundColor: colors.surfaceContainerLow,
-        borderRadius: '8px',
-        ...slideUp,
-      }}
-    >
-      <p
-        style={{
-          fontSize: '12px',
-          color: colors.onSurfaceVariant,
-          margin: 0,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          fontSize: '24px',
-          fontWeight: 700,
-          color: colors.onSurface,
-          margin: '4px 0 0',
-        }}
-      >
-        {value}
-      </p>
-    </div>
-  );
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
 }
 
+const StatCard = ({ label, value, icon, color }: StatCardProps) => {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statTop}>
+        <View style={[styles.iconContainer, { backgroundColor: `${color}10` }]}>{icon}</View>
+        <Text variant="labelSm" color={colors.onSurfaceVariant} style={styles.statLabel}>
+          {label}
+        </Text>
+      </View>
+      <View style={styles.statBottom}>
+        <Text variant="headlineSm" weight="900" color={colors.primary} style={styles.statValue}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 export default function DashboardScreen() {
-  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'ADMIN';
 
   const {
     data: dashboardData,
     isPending: dashboardPending,
-    isError: dashboardError,
     refetch: dashboardRefetch,
   } = useDashboard();
   const {
     data: analytics,
     isPending: analyticsPending,
-    isError: analyticsError,
     refetch: analyticsRefetch,
   } = useAnalytics();
 
   const isPending = dashboardPending || analyticsPending;
-  const isError = dashboardError || analyticsError;
   const refetch = () => {
     dashboardRefetch();
     analyticsRefetch();
   };
 
   if (isPending) {
-    return <LoadingState message="Cargando..." />;
+    return <LoadingState message="Generando analíticas..." variant="spinner" fullPage />;
   }
 
-  if (isError) {
-    return (
-      <EmptyState
-        title="Error al cargar el dashboard"
-        description="No se pudieron cargar los datos. Intenta de nuevo."
-        actionLabel="Reintentar"
-        onAction={() => refetch()}
-      />
-    );
-  }
-
-  const projects = dashboardData?.projects || [];
-  const quotes = dashboardData?.quotes || [];
-  const activeQuotes = quotes.filter((q: any) => q.estado !== 'REEMPLAZADA');
+  const projectsCount = analytics?.proyectosActivos ?? dashboardData?.projects?.length ?? 0;
+  const quotesCount = analytics?.totalCotizaciones ?? dashboardData?.quotes?.length ?? 0;
 
   return (
-    <PageLayout
-      title="ProArq"
-      fabAction={() => router.push('/cotizaciones/create')}
-      fabLabel="Nueva Cotización"
-      fabVisible
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: spacing.md,
-        }}
-      >
-        <div
-          data-testid="profile-avatar"
-          onClick={() => router.push('/profile')}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: colors.primaryContainer,
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '16px',
-          }}
-        >
-          {user?.name?.[0] || 'U'}
-        </div>
-      </div>
-
-      {/* Stats cards row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: spacing.lg, flexWrap: 'wrap' }}>
-        <StatCard
-          label="Total Cotizaciones"
-          value={analytics?.totalCotizaciones ?? activeQuotes.length}
-        />
-        <StatCard
-          label="Proyectos Activos"
-          value={analytics?.proyectosActivos ?? projects.length}
-        />
-        <StatCard label="Total Insumos" value={analytics?.totalInsumos ?? '-'} />
-        <StatCard
-          label="Monto Total APU"
-          value={
-            analytics?.montoTotalAPU
-              ? `$${Number.parseFloat(analytics.montoTotalAPU).toLocaleString('es-CO')}`
-              : '-'
-          }
-        />
-        {isAdmin && <StatCard label="Usuarios Activos" value={analytics?.usuariosActivos ?? '-'} />}
-      </div>
-
-      <h2
-        style={{ fontSize: '16px', fontWeight: 600, color: colors.onSurface, margin: '0 0 12px' }}
-      >
-        Proyectos Recientes
-      </h2>
-
-      {projects.length === 0 ? (
-        <p
-          style={{
-            color: colors.onSurfaceVariant,
-            fontSize: '14px',
-            textAlign: 'center',
-            padding: spacing.lg,
-          }}
-        >
-          No hay proyectos
-        </p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-          {projects.map((p: any) => (
-            <div
-              key={p.id}
-              style={{
-                padding: '12px',
-                backgroundColor: colors.surfaceContainerLow,
-                borderRadius: '8px',
-                cursor: 'pointer',
-                ...slideUp,
-              }}
-              onClick={() => router.push(`/projects/${p.id}`)}
-            >
-              <p style={{ fontWeight: 600, color: colors.onSurface, margin: 0 }}>{p.nombre}</p>
-              <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, margin: '4px 0 0' }}>
-                {p.codigo}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {quotes.length > 0 && (
-        <>
-          <h2
-            style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: colors.onSurface,
-              margin: `${spacing.lg}px 0 12px`,
-            }}
+    <PageLayout title="Resumen del Sistema" scrollable={false}>
+      <View style={styles.container}>
+        {/* Header / Greeting */}
+        <View style={styles.headerSection}>
+          <Text
+            variant="headlineSm"
+            weight="900"
+            color={colors.primary}
+            style={styles.greetingText}
           >
-            Cotizaciones Recientes
-          </h2>
-          {quotes.map((q: any) => (
-            <div
-              key={q.id}
-              style={{
-                padding: '12px',
-                backgroundColor: colors.surfaceContainerLow,
-                borderRadius: '8px',
-                marginBottom: spacing.sm,
-              }}
-            >
-              <p style={{ fontWeight: 600, color: colors.onSurface, margin: 0 }}>{q.codigo}</p>
-            </div>
-          ))}
-        </>
-      )}
+            ¡Hola, {user?.name?.split(' ')[0] || 'Usuario'}! 👋
+          </Text>
+          <Text variant="bodyMd" color={colors.onSurfaceVariant} style={styles.subText}>
+            Estado administrativo de ProArq.
+          </Text>
+        </View>
 
-      <div data-testid="refresh-control" onClick={() => refetch()} style={{ display: 'none' }} />
+        {/* Main Stats Grid */}
+        <View style={styles.analyticsGrid}>
+          <View style={styles.gridRow}>
+            <StatCard
+              label="Proyectos Activos"
+              value={projectsCount}
+              icon={<ProyectosIcon size={18} color={colors.primary} />}
+              color={colors.primary}
+            />
+            <StatCard
+              label="Cotizaciones"
+              value={quotesCount}
+              icon={<CotizacionesIcon size={18} color={colors.tertiary} />}
+              color={colors.tertiary}
+            />
+          </View>
+
+          <View style={styles.gridRow}>
+            <StatCard
+              label="Catálogo Insumos"
+              value={analytics?.totalInsumos ?? '-'}
+              icon={<InsumosIcon size={18} color={colors.success} />}
+              color={colors.success}
+            />
+            <StatCard
+              label="Análisis APU"
+              value={analytics?.totalApus ?? dashboardData?.apus?.length ?? '-'}
+              icon={<ApusIcon size={18} color={colors.secondary} />}
+              color={colors.secondary}
+            />
+          </View>
+
+          <View style={styles.fullWidthStat}>
+            <StatCard
+              label="Monto Total Contratado (APU)"
+              value={
+                analytics?.montoTotalAPU
+                  ? `$${Number.parseFloat(analytics.montoTotalAPU).toLocaleString('es-CO')}`
+                  : '$0'
+              }
+              icon={<Text variant="titleSm">💰</Text>}
+              color={colors.success}
+            />
+          </View>
+
+          {isAdmin && (
+            <View style={styles.fullWidthStat}>
+              <StatCard
+                label="Usuarios en el Sistema"
+                value={analytics?.usuariosActivos ?? '-'}
+                icon={<UsersIcon size={18} color={colors.primary} />}
+                color={colors.primary}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Extra Visual Indicator / Summary */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryBadge}>
+            <Text variant="labelSm" color={colors.onSurfaceVariant} weight="800">
+              ACTUALIZADO: {new Date().toLocaleTimeString()}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View data-testid="refresh-control" onClick={() => refetch()} style={{ display: 'none' }} />
     </PageLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    minHeight: '100%',
+  },
+  headerSection: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+    paddingHorizontal: 4,
+  },
+  greetingText: {
+    fontSize: 24,
+    lineHeight: 30,
+    marginBottom: 12,
+  },
+  subText: {
+    opacity: 0.7,
+    fontSize: 14,
+  },
+  analyticsGrid: {
+    gap: 12,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  fullWidthStat: {
+    width: '100%',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.8)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 3,
+    minHeight: 110,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statTop: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  statBottom: {
+    marginTop: 2,
+  },
+  statLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontSize: 9,
+    fontWeight: '800',
+    opacity: 0.6,
+    marginTop: 8.5,
+  },
+  statValue: {
+    fontSize: 20,
+    letterSpacing: -0.5,
+  },
+  summaryContainer: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+  },
+  summaryBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: 8,
+  },
+});

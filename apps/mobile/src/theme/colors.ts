@@ -1,41 +1,54 @@
 export const colors = {
-  primary: '#04162f',
-  primaryContainer: '#1a2b45',
-  onPrimaryContainer: '#8293b2',
-  primaryFixed: '#d6e3ff',
-  primaryFixedDim: '#b6c7e8',
+  // Primary - Deep Professional Blue
+  primary: '#0F172A',
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#1E293B',
+  onPrimaryContainer: '#E2E8F0',
 
-  tertiary: '#2d0d00',
-  tertiaryContainer: '#F37021',
-  onTertiaryContainer: '#ed6c1c',
-  tertiaryFixed: '#ffdbcb',
-  tertiaryFixedDim: '#ffb693',
+  // Secondary - Professional Slate/Gray
+  secondary: '#475569',
+  onSecondary: '#FFFFFF',
+  secondaryContainer: '#F1F5F9',
+  onSecondaryContainer: '#1E293B',
 
-  surface: '#fbf9fb',
-  surfaceBright: '#fbf9fb',
-  surfaceContainer: '#efedf0',
-  surfaceContainerHigh: '#e9e7ea',
-  surfaceContainerHighest: '#e4e2e4',
-  surfaceContainerLow: '#f5f3f5',
-  surfaceContainerLowest: '#ffffff',
-  surfaceDim: '#dbd9dc',
-  surfaceTint: '#4e5f7c',
-  surfaceVariant: '#e4e2e4',
+  // Tertiary - Modern Brand Orange (Accent)
+  tertiary: '#F97316',
+  onTertiary: '#FFFFFF',
+  tertiaryContainer: '#FFEDD5',
+  onTertiaryContainer: '#9A3412',
 
-  onSurface: '#1b1b1e',
-  onSurfaceVariant: '#44474d',
-  outline: '#75777e',
-  outlineVariant: '#c5c6ce',
+  // Surfaces - Clean and Modern
+  surface: '#F8FAFC',
+  onSurface: '#0F172A',
+  surfaceVariant: '#F1F5F9',
+  onSurfaceVariant: '#64748B',
+  
+  // Containers
+  surfaceContainerLow: '#FFFFFF',
+  surfaceContainer: '#F8FAFC',
+  surfaceContainerHigh: '#F1F5F9',
+  surfaceContainerHighest: '#E2E8F0',
+  
+  // Accents & Outlines
+  outline: '#CBD5E1',
+  outlineVariant: '#E2E8F0',
+  surfaceTint: '#334155',
 
-  error: '#ba1a1a',
-  errorContainer: '#ffdad6',
-  onError: '#ffffff',
-  onErrorContainer: '#93000a',
+  // Status
+  error: '#EF4444',
+  onError: '#FFFFFF',
+  errorContainer: '#FEE2E2',
+  onErrorContainer: '#991B1B',
+  
+  success: '#10B981',
+  onSuccess: '#FFFFFF',
+  successContainer: '#D1FAE5',
+  onSuccessContainer: '#065F46',
 
-  secondary: '#5e5e5e',
-  secondaryContainer: '#e1dfdf',
-  onSecondary: '#ffffff',
-  onSecondaryContainer: '#626263',
+  warning: '#F59E0B',
+  onWarning: '#FFFFFF',
+  warningContainer: '#FEF3C7',
+  onWarningContainer: '#92400E',
 } as const;
 
 export type ColorKey = keyof typeof colors;

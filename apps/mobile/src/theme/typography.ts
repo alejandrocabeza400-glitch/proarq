@@ -6,33 +6,35 @@ export interface TypographyLevel {
   letterSpacing?: number;
 }
 
+const systemFontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
+
 export const typography: Record<string, TypographyLevel> = {
   displayLg: {
-    fontFamily: 'Inter',
+    fontFamily: systemFontStack,
     fontSize: 48,
     fontWeight: '800',
-    lineHeight: 1.1,
+    lineHeight: 56,
     letterSpacing: -0.02,
   },
   displaySm: {
-    fontFamily: 'Inter',
-    fontSize: 36,
-    fontWeight: '800',
-    lineHeight: 1.2,
-    letterSpacing: -0.02,
+    fontFamily: systemFontStack,
+    fontSize: 32,
+    fontWeight: '900',
+    lineHeight: 40,
+    letterSpacing: -0.04,
   },
-  headlineLg: { fontFamily: 'Inter', fontSize: 30, fontWeight: '700', lineHeight: 1.3 },
-  headlineSm: { fontFamily: 'Inter', fontSize: 24, fontWeight: '700', lineHeight: 1.3 },
-  titleMd: { fontFamily: 'Inter', fontSize: 18, fontWeight: '600', lineHeight: 1.4 },
-  titleSm: { fontFamily: 'Inter', fontSize: 16, fontWeight: '600', lineHeight: 1.4 },
-  bodyMd: { fontFamily: 'Inter', fontSize: 16, fontWeight: '400', lineHeight: 1.6 },
-  bodySm: { fontFamily: 'Inter', fontSize: 14, fontWeight: '400', lineHeight: 1.5 },
-  labelMd: { fontFamily: 'Inter', fontSize: 14, fontWeight: '500', lineHeight: 1.4 },
+  headlineLg: { fontFamily: systemFontStack, fontSize: 30, fontWeight: '700', lineHeight: 38 },
+  headlineSm: { fontFamily: systemFontStack, fontSize: 24, fontWeight: '800', lineHeight: 32 },
+  titleMd: { fontFamily: systemFontStack, fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  titleSm: { fontFamily: systemFontStack, fontSize: 16, fontWeight: '700', lineHeight: 24 },
+  bodyMd: { fontFamily: systemFontStack, fontSize: 16, fontWeight: '400', lineHeight: 24 },
+  bodySm: { fontFamily: systemFontStack, fontSize: 14, fontWeight: '400', lineHeight: 22 },
+  labelMd: { fontFamily: systemFontStack, fontSize: 12, fontWeight: '700', lineHeight: 18 },
   labelSm: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '500',
-    lineHeight: 1.4,
+    fontFamily: systemFontStack,
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 16,
     letterSpacing: 0.05,
   },
 };
