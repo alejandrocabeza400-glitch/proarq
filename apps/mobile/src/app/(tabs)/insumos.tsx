@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import InsumoCard from '../../components/InsumoCard';
 import PageLayout from '../../components/PageLayout';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -15,6 +15,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { ExportIcon } from '../../components/ui/Icons';
+import { downloadBlob } from '../../utils';
 
 const FILTER_CHIPS = ['Código', 'Nombre', 'Unidad'];
 
@@ -43,19 +44,20 @@ export default function InsumosScreen() {
 
   const handleExportPdf = async () => {
     try {
-      // Logic for exporting all supplies PDF
+      const blob = await insumosApi.exportPdf();
+      downloadBlob(blob, 'catalogo-insumos.pdf');
     } catch (err) {
       console.error(err);
     }
   };
 
   if (isPending) {
-    return <LoadingState message="Cargando catálogo..." variant="spinner" fullPage />;
+    return <LoadingState message="Cargando insumos..." variant="spinner" fullPage />;
   }
 
   if (isError) {
     return (
-      <PageLayout title="Catálogo Maestro">
+      <PageLayout title="Insumos">
         <EmptyState
           title="Error al cargar insumos"
           description="No se pudieron cargar los insumos. Intenta de nuevo."
@@ -78,11 +80,11 @@ export default function InsumosScreen() {
 
   return (
     <PageLayout
-      title="Catálogo Maestro"
+      title="Insumos"
       headerAction={{
         icon: <ExportIcon size={22} color={colors.primary} />,
         onPress: handleExportPdf,
-        label: 'Exportar PDF'
+        label: 'Exportar PDF',
       }}
     >
       <Input

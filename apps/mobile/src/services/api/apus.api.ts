@@ -60,4 +60,8 @@ export const apusApi = {
   removeInsumo: async (apuId: string, itemId: string): Promise<void> => {
     await client.delete(`/apus/${apuId}/insumos/${itemId}`);
   },
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await client.get('/apus/pdf', { responseType: 'blob' });
+    return data;
+  },
 };

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const unidadEnum = z.enum(['M3', 'KG', 'UND', 'GL']);
+export const unidadEnum = z.enum(['M3', 'KG', 'UND', 'GL', 'M2', 'ML']);
 
 export const createInsumoSchema = z.object({
   nombre: z.string().min(1, 'Name is required').max(255),

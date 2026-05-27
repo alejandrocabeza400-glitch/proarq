@@ -15,6 +15,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { ExportIcon } from '../../components/ui/Icons';
+import { downloadBlob } from '../../utils';
 
 const COTIZACION_STATUSES = ['BORRADOR', 'ENVIADA', 'APROBADA', 'REEMPLAZADA'] as const;
 
@@ -50,7 +51,8 @@ export default function CotizacionesScreen() {
 
   const handleExportPdf = async () => {
     try {
-      // Logic for exporting all quotes PDF
+      const blob = await cotizacionesApi.exportPdf();
+      downloadBlob(blob, 'cotizaciones-proarq.pdf');
     } catch (err) {
       console.error(err);
     }

@@ -14,6 +14,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { ExportIcon } from '../../components/ui/Icons';
+import { downloadBlob } from '../../utils';
 
 export default function ProyectosScreen() {
   const router = useRouter();
@@ -37,8 +38,8 @@ export default function ProyectosScreen() {
 
   const handleExportPdf = async () => {
     try {
-      // Logic for exporting all projects PDF
-      // alert('Generando PDF de Proyectos...');
+      const blob = await proyectosApi.exportPdf();
+      downloadBlob(blob, 'proyectos-proarq.pdf');
     } catch (err) {
       console.error(err);
     }

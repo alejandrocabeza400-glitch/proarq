@@ -11,6 +11,7 @@ import { auditApi, type AuditLog } from '../../services/api/audit.api';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { ExportIcon } from '../../components/ui/Icons';
+import { downloadBlob } from '../../utils';
 
 function getActionColor(action: string) {
   switch (action) {
@@ -38,8 +39,8 @@ export default function AuditLogsScreen() {
 
   const handleExportPdf = async () => {
     try {
-      await auditApi.exportPdf();
-      // On web, this usually triggers a download if the API is set up correctly
+      const blob = await auditApi.exportPdf();
+      downloadBlob(blob, 'bitacora-auditoria.pdf');
     } catch (err) {
       console.error(err);
     }

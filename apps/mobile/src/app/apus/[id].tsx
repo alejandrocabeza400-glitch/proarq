@@ -1,158 +1,281 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import PageLayout from '../../components/PageLayout';
+import Button from '../../components/ui/Button';
+import EmptyState from '../../components/ui/EmptyState';
+import Input from '../../components/ui/Input';
 import LoadingState from '../../components/ui/LoadingState';
-import type { Apu } from '../../services/api/apus.api';
+import Text from '../../components/ui/Text';
+import Card from '../../components/ui/Card';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { apusApi } from '../../services/api/apus.api';
+import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+
+const TIPOS_APU = ['GLOBAL', 'UNITARIO', 'LUMP_SUM'];
 
 export default function ApuDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [apu, setApu] = useState<Apu | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const canManage = user?.role === 'ADMIN' || user?.role === 'GERENTE_OBRA' || user?.role === 'DIRECTOR_OBRA';
 
-  useEffect(() => {
-    if (id) {
-      setLoading(true);
-      apusApi
-        .getById(id)
-        .then((res) => setApu(res.data))
-        .catch(() => {})
-        .finally(() => setLoading(false));
+  const [isEditing, setIsEditing] = useState(false);
+  const [editNombre, setEditNombre] = useState('');
+  const [editTipo, setEditTipo] = useState('UNITARIO');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const {
+    data: apu,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['apu', id],
+    queryFn: async () => {
+      const res = await apusApi.getById(id!);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apusApi.update(id!, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apu', id] });
+      queryClient.invalidateQueries({ queryKey: ['apus'] });
+      setIsEditing(false);
+      setGeneralError('');
+    },
+    onError: (err: any) => {
+      const apiError = err?.response?.data;
+      if (apiError?.details && Array.isArray(apiError.details)) {
+        const newErrors: Record<string, string> = {};
+        apiError.details.forEach((detail: any) => {
+          if (detail.path) newErrors[detail.path] = detail.message;
+        });
+        setErrors(newErrors);
+      } else {
+        setGeneralError(apiError?.error || apiError?.message || 'Error al actualizar el análisis.');
+      }
     }
-  }, [id]);
+  });
 
-  if (loading) {
-    return <LoadingState message="Cargando..." />;
-  }
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await apusApi.delete(id!);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apus'] });
+      router.back();
+    },
+    onError: (err: any) => {
+      setGeneralError('No se pudo eliminar el APU. Verifica si tiene ítems o cotizaciones vinculadas.');
+      setShowDeleteConfirm(false);
+    }
+  });
 
-  if (!apu) {
-    return <div style={{ padding: spacing.lg, fontFamily: 'Inter' }}>APU no encontrado</div>;
+  const handleSave = () => {
+    if (!editNombre.trim()) {
+      setErrors({ nombre: 'El nombre es obligatorio.' });
+      return;
+    }
+    updateMutation.mutate({ nombre: editNombre, tipo: editTipo });
+  };
+
+  if (isPending) return <LoadingState message="Cargando análisis..." variant="spinner" fullPage />;
+
+  if (isError || !apu) {
+    return (
+      <PageLayout title="Detalle APU" showBack>
+        <EmptyState
+          title="Análisis no encontrado"
+          description="Este análisis APU puede haber sido eliminado o no tienes acceso."
+          actionLabel="Volver a la Lista"
+          onAction={() => router.back()}
+        />
+      </PageLayout>
+    );
   }
 
   return (
-    <PageLayout title="Detalle APU" showBack onBack={() => router.back()}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, color: colors.onSurface, margin: '0 0 8px' }}>
-        {apu.nombre}
-      </h1>
-      <p style={{ color: colors.onSurfaceVariant, fontSize: '14px', margin: '0 0 24px' }}>
-        {apu.codigo} | {apu.tipo}
-      </p>
+    <PageLayout title={apu.codigo} showBack onBack={() => router.back()}>
+      <View style={styles.header}>
+        <View style={styles.titleContainer}>
+          <Text variant="headlineSm" weight="900" color={colors.primary}>{apu.nombre}</Text>
+          <Text variant="labelMd" color={colors.onSurfaceVariant}>{apu.codigo}</Text>
+        </View>
+        <View style={styles.typeBadge}>
+          <Text variant="labelSm" weight="800" color={colors.secondary}>{apu.tipo}</Text>
+        </View>
+      </View>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing.sm,
-          marginBottom: spacing.lg,
-        }}
-      >
-        {(apu.items || []).map((item) => (
-          <div
-            key={item.id}
-            style={{
-              padding: '12px',
-              backgroundColor: colors.surfaceContainerLow,
-              borderRadius: '8px',
-            }}
-          >
-            <p style={{ fontWeight: 600, margin: 0, fontSize: '14px' }}>{item.insumoNombre}</p>
-            <p style={{ fontSize: '12px', color: colors.onSurfaceVariant, margin: '4px 0 0' }}>
-              Rend: {item.rendimiento} | Desp: {item.desperdicio}%
-            </p>
-          </div>
-        ))}
-      </div>
+      {generalError ? (
+        <View style={styles.errorBanner}>
+          <Text variant="labelSm" color={colors.error} weight="700">⚠️ {generalError}</Text>
+        </View>
+      ) : null}
 
-      <div
-        data-testid="cost-summary"
-        style={{
-          padding: spacing.md,
-          backgroundColor: colors.surfaceContainerLowest,
-          borderRadius: '8px',
-          marginBottom: spacing.lg,
-        }}
-      >
-        <p style={{ fontWeight: 600, color: colors.onSurface, margin: 0 }}>Resumen de Costos</p>
-      </div>
+      {isEditing ? (
+        <View style={styles.form}>
+          <Input
+            label="Nombre del Análisis"
+            value={editNombre}
+            onChangeText={setEditNombre}
+            error={errors.nombre}
+          />
+          <View style={styles.selectGroup}>
+            <Text variant="labelMd" weight="700" color={colors.onSurface} style={styles.label}>
+              Tipo de Análisis
+            </Text>
+            <View style={styles.pickerContainer}>
+              <select value={editTipo} onChange={(e) => setEditTipo(e.target.value)} style={styles.nativeSelect}>
+                {TIPOS_APU.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </View>
+          </View>
+          <View style={styles.actions}>
+            <Button onPress={handleSave} loading={updateMutation.isPending} style={{ flex: 1 }}>
+              Guardar Cambios
+            </Button>
+            <Button variant="ghost" onPress={() => setIsEditing(false)} disabled={updateMutation.isPending}>
+              Cancelar
+            </Button>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <Text variant="labelSm" weight="800" color={colors.onSurfaceVariant} style={styles.sectionTitle}>ÍTEMS VINCULADOS</Text>
+            <Card style={styles.infoCard}>
+              <Text variant="bodyMd" weight="700" color={colors.primary}>
+                {apu.itemsCount || 0} Insumos asociados
+              </Text>
+            </Card>
+          </View>
 
-      <button
-        onClick={() => setShowModal(true)}
-        style={{
-          padding: '12px 24px',
-          backgroundColor: colors.tertiaryContainer,
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: '6px',
-          fontSize: '16px',
-          fontWeight: 600,
-          fontFamily: 'Inter',
-          cursor: 'pointer',
-          width: '100%',
-        }}
-      >
-        Agregar Insumo
-      </button>
-
-      {showModal && (
-        <div
-          data-testid="insumo-search-modal"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: colors.surface,
-              padding: spacing.lg,
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '400px',
-            }}
-          >
-            <p style={{ fontWeight: 600, margin: '0 0 16px' }}>Buscar Insumo</p>
-            <input
-              placeholder="Buscar..."
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: `1px solid ${colors.outlineVariant}`,
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontFamily: 'Inter',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-            <button
-              onClick={() => setShowModal(false)}
-              style={{
-                marginTop: spacing.md,
-                padding: '8px 16px',
-                backgroundColor: colors.surfaceContainerHigh,
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontFamily: 'Inter',
-              }}
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
+          <View style={styles.footer}>
+            {canManage && (
+              <>
+                <Button onPress={() => {
+                  setEditNombre(apu.nombre);
+                  setEditTipo(apu.tipo);
+                  setIsEditing(true);
+                }} variant="secondary" fullWidth>
+                  Editar Información Básica
+                </Button>
+                <Button
+                  onPress={() => setShowDeleteConfirm(true)}
+                  variant="ghost"
+                  fullWidth
+                  style={styles.deleteButton}
+                >
+                  Eliminar Análisis
+                </Button>
+              </>
+            )}
+          </View>
+        </View>
       )}
+
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="¿Eliminar Análisis?"
+        description="Esta acción eliminará el análisis APU de forma permanente."
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setShowDeleteConfirm(false)}
+        isConfirming={deleteMutation.isPending}
+      />
     </PageLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.xl,
+  },
+  titleContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  typeBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: colors.surfaceVariant,
+    borderRadius: 8,
+  },
+  errorBanner: {
+    padding: 14,
+    backgroundColor: colors.errorContainer,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  form: {
+    gap: spacing.md,
+  },
+  selectGroup: {
+    gap: 8,
+  },
+  label: {
+    marginBottom: 4,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.8)',
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+  nativeSelect: {
+    width: '100%',
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Inter',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    color: colors.primary,
+    outline: 'none',
+  } as any,
+  actions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: spacing.md,
+  },
+  content: {
+    gap: spacing.lg,
+  },
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    letterSpacing: 1,
+    paddingLeft: 4,
+  },
+  infoCard: {
+    padding: 16,
+    backgroundColor: colors.surfaceContainerLow,
+  },
+  footer: {
+    marginTop: spacing.xl,
+    gap: 12,
+    paddingBottom: 40,
+  },
+  deleteButton: {
+    color: colors.error,
+  }
+});

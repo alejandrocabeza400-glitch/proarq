@@ -8,12 +8,14 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
 import Input from '../../components/ui/Input';
 import LoadingState from '../../components/ui/LoadingState';
+import Text from '../../components/ui/Text';
 import { useApus } from '../../hooks/useApus';
 import { apusApi } from '../../services/api/apus.api';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { ExportIcon } from '../../components/ui/Icons';
+import { downloadBlob } from '../../utils';
 
 export default function ApusScreen() {
   const router = useRouter();
@@ -24,7 +26,15 @@ export default function ApusScreen() {
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const { data: apus = [], isPending, isError, refetch } = useApus();
+  const { data: response, isPending, isError, refetch } = useApus();
+  const apus = response?.data || [];
+
+  const filteredApus = apus.filter(
+    (a) =>
+      a.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+      a.codigo?.toLowerCase().includes(search.toLowerCase()) ||
+      a.tipo?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -38,7 +48,8 @@ export default function ApusScreen() {
 
   const handleExportPdf = async () => {
     try {
-      // Logic for exporting all APUs PDF
+      const blob = await apusApi.exportPdf();
+      downloadBlob(blob, 'analisis-apus.pdf');
     } catch (err) {
       console.error(err);
     }
@@ -46,6 +57,10 @@ export default function ApusScreen() {
 
   const handleEdit = (id: string) => {
     router.push(`/apus/${id}`);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   if (isPending) {
@@ -64,13 +79,6 @@ export default function ApusScreen() {
       </PageLayout>
     );
   }
-
-  const filteredApus = apus.filter(
-    (a) =>
-      a.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-      a.codigo?.toLowerCase().includes(search.toLowerCase()) ||
-      a.tipo?.toLowerCase().includes(search.toLowerCase()),
-  );
 
   return (
     <PageLayout
@@ -113,7 +121,7 @@ export default function ApusScreen() {
         visible={confirmDelete !== null}
         title="¿Confirmar eliminación?"
         description="Esta acción no se puede deshacer y eliminará permanentemente este APU del sistema."
-        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete)}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
         onCancel={() => setConfirmDelete(null)}
         isConfirming={deleteMutation.isPending}
       />

@@ -7,6 +7,8 @@ import type { Proyecto } from '@proarq/core/domain/entities/proyecto.entity';
 import { and, eq, like, sql } from 'drizzle-orm';
 import { db } from '../database/connection';
 import { proyectos } from '../database/schema/proyecto.schema';
+import { users } from '../database/schema/user.schema';
+import { alias } from 'drizzle-orm/pg-core';
 
 export const postgresProyectoRepo: ProyectoRepository = {
   async findByCodigo(codigo: string): Promise<Proyecto | null> {
@@ -15,7 +17,36 @@ export const postgresProyectoRepo: ProyectoRepository = {
   },
 
   async findById(id: string): Promise<Proyecto | null> {
-    const result = await db.select().from(proyectos).where(eq(proyectos.id, id)).limit(1);
+    const creator = alias(users, 'creator');
+    
+    const result = await db
+      .select({
+        id: proyectos.id,
+        codigo: proyectos.codigo,
+        nombre: proyectos.nombre,
+        descripcion: proyectos.descripcion,
+        estado: proyectos.estado,
+        clienteId: proyectos.clienteId,
+        createdBy: proyectos.createdBy,
+        createdAt: proyectos.createdAt,
+        updatedAt: proyectos.updatedAt,
+        cliente: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        },
+        creator: {
+          id: creator.id,
+          name: creator.name,
+          email: creator.email,
+        }
+      })
+      .from(proyectos)
+      .leftJoin(users, eq(proyectos.clienteId, users.id))
+      .leftJoin(creator, eq(proyectos.createdBy, creator.id))
+      .where(eq(proyectos.id, id))
+      .limit(1);
+
     return (result[0] as unknown as Proyecto) ?? null;
   },
 

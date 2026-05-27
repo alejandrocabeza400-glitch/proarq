@@ -42,4 +42,8 @@ export const insumosApi = {
   delete: async (id: string): Promise<void> => {
     await client.delete(`/insumos/${id}`);
   },
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await client.get('/insumos/pdf', { responseType: 'blob' });
+    return data;
+  },
 };

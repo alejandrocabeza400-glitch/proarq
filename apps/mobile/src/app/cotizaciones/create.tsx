@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import PageLayout from '../../components/PageLayout';
-import ProyectoForm, { type ProyectoFormData } from '../../components/ProyectoForm';
-import { proyectosApi } from '../../services/api/projects.api';
+import CotizacionForm, { type CotizacionFormData } from '../../components/CotizacionForm';
+import { cotizacionesApi } from '../../services/api/cotizaciones.api';
 
-export default function CrearProyectoScreen() {
+export default function CrearCotizacionScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -13,12 +13,13 @@ export default function CrearProyectoScreen() {
   const [generalError, setGeneralError] = useState('');
 
   const createMutation = useMutation({
-    mutationFn: async (data: ProyectoFormData) => {
-      return await proyectosApi.create(data as any);
+    mutationFn: async (data: CotizacionFormData) => {
+      return await cotizacionesApi.create(data as any);
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['proyectos'] });
-      router.replace(`/proyectos/${response.data.id}`);
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
+      // Redirect to the newly created quote's detail view
+      router.replace(`/cotizaciones/${response.data.id}`);
     },
     onError: (err: any) => {
       const apiError = err?.response?.data;
@@ -31,24 +32,23 @@ export default function CrearProyectoScreen() {
         setExternalErrors(newErrors);
         setGeneralError('Por favor verifica los campos resaltados.');
       } else {
-        setGeneralError(apiError?.error || apiError?.message || 'Error al conectar con el servidor.');
+        setGeneralError(apiError?.error || apiError?.message || 'Error al crear la cotización.');
       }
     },
   });
 
-  const handleSubmit = (data: ProyectoFormData) => {
+  const handleSubmit = (data: CotizacionFormData) => {
     setGeneralError('');
     setExternalErrors({});
     createMutation.mutate(data);
   };
 
   return (
-    <PageLayout title="Nuevo Proyecto" showBack onBack={() => router.back()}>
-      <ProyectoForm 
+    <PageLayout title="Nueva Cotización" showBack onBack={() => router.back()}>
+      <CotizacionForm 
         onSubmit={handleSubmit}
         onCancel={() => router.back()}
         isLoading={createMutation.isPending}
-        submitLabel="Crear Proyecto"
         generalError={generalError}
         externalErrors={externalErrors}
       />

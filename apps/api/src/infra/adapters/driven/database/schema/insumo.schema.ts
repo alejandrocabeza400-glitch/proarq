@@ -15,7 +15,7 @@ export const insumosMaestro = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
-    unidadCheck: check('unidad_check', sql`${table.unidad} IN ('M3','KG','UND','GL')`),
+    unidadCheck: check('unidad_check', sql`${table.unidad} IN ('M3','KG','UND','GL','M2','ML')`),
     nombreIdx: index('insumos_nombre_idx').on(table.nombre),
   }),
 );

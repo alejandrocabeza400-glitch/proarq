@@ -43,4 +43,8 @@ export const proyectosApi = {
   delete: async (id: string): Promise<void> => {
     await client.delete(`/proyectos/${id}`);
   },
+  exportPdf: async (): Promise<Blob> => {
+    const { data } = await client.get('/proyectos/pdf', { responseType: 'blob' });
+    return data;
+  },
 };
